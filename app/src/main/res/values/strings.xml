@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Job Tracker</string>
+    <string name="dashboard_title">Applications</string>
+    <string name="search_placeholder">Search company, role, or notes...</string>
+    <string name="add_application">Add Application</string>
+    <string name="edit_application">Edit Application</string>
+    <string name="company_name">Company Name</string>
+    <string name="job_title">Job Title</string>
+    <string name="date_applied">Date Applied</string>
+    <string name="status">Status</string>
+    <string name="salary">Salary / Compensation</string>
+    <string name="notes">Notes &amp; Details</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="empty_applications_title">No job applications yet</string>
+    <string name="empty_applications_subtitle">Tap the + button to track your first job application.</string>
+    <string name="empty_search_title">No matches found</string>
+    <string name="empty_search_subtitle">Try searching with a different keyword or filter.</string>
+</resources>
+

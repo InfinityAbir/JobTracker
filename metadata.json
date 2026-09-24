@@ -1,0 +1,7 @@
+{
+  "name": "Job Tracker",
+  "description": "Production-ready Job Application Tracker with MVVM, Room DB, Gemini AI Job Parser, Cover Letter Generator, and Follow-Up Email Drafter.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include the entire Room database and related SQLite WAL/SHM files -->
+    <include domain="database" path="job_tracker_db" />
+    <include domain="database" path="job_tracker_db-shm" />
+    <include domain="database" path="job_tracker_db-wal" />
+    <!-- Include local shared preferences -->
+    <include domain="sharedpref" path="." />
+    <!-- Include app internal and external backup files -->
+    <include domain="file" path="." />
+    <include domain="external" path="." />
+</full-backup-content>
