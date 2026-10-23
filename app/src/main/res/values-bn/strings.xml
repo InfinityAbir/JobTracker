@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">জব ট্র্যাকার</string>
+    <string name="dashboard_title">আবেদনসমূহ</string>
+    <string name="search_placeholder">কোম্পানি, পদবী বা নোট খুঁজুন...</string>
+    <string name="add_application">আবেদন যোগ করুন</string>
+    <string name="edit_application">আবেদন সম্পাদনা করুন</string>
+    <string name="company_name">কোম্পানির নাম</string>
+    <string name="job_title">কাজের পদবী</string>
+    <string name="date_applied">আবেদনের তারিখ</string>
+    <string name="status">অবস্থা</string>
+    <string name="salary">বেতন / পারিশ্রমিক</string>
+    <string name="notes">নোট ও বিস্তারিত</string>
+    <string name="save">সংরক্ষণ করুন</string>
+    <string name="delete">মুছে ফেলুন</string>
+    <string name="cancel">বাতিল</string>
+    <string name="empty_applications_title">এখনও কোনো চাকরির আবেদন নেই</string>
+    <string name="empty_applications_subtitle">প্রথম আবেদন যোগ করতে + বাটনে ট্যাপ করুন।</string>
+    <string name="empty_search_title">কোনো ফলাফল পাওয়া যায়নি</string>
+    <string name="empty_search_subtitle">অন্য কোনো শব্দ বা ফিল্টার দিয়ে চেষ্টা করুন।</string>
+</resources>
