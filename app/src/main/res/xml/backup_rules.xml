@@ -6,6 +6,7 @@
     <include domain="database" path="job_tracker_db-wal" />
     <!-- Include local shared preferences -->
     <include domain="sharedpref" path="." />
+    <exclude domain="sharedpref" path="ai_settings.xml" />
     <!-- Include app internal and external backup files -->
     <include domain="file" path="." />
     <include domain="external" path="." />

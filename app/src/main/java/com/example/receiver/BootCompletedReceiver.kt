@@ -19,6 +19,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
         ) {
             val app = context.applicationContext as? JobTrackerApp ?: return
             val database = app.container.database
+            val pendingResult = goAsync()
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -31,6 +32,8 @@ class BootCompletedReceiver : BroadcastReceiver() {
                     }
                 } catch (e: Exception) {
                     // Ignore restore errors on boot
+                } finally {
+                    pendingResult.finish()
                 }
             }
         }

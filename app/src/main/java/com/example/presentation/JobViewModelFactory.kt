@@ -40,7 +40,9 @@ class JobViewModelFactory(
                     parseJobDescriptionUseCase = appContainer.parseJobDescriptionUseCase,
                     generateCoverLetterUseCase = appContainer.generateCoverLetterUseCase,
                     generateFollowUpEmailUseCase = appContainer.generateFollowUpEmailUseCase,
-                    saveJobApplicationUseCase = appContainer.saveJobApplicationUseCase
+                    saveJobApplicationUseCase = appContainer.saveJobApplicationUseCase,
+                    apiKeyStore = appContainer.apiKeyStore,
+                    proxyAvailable = appContainer.aiProxyAvailable
                 ) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

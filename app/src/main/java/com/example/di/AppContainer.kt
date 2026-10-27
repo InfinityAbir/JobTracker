@@ -1,7 +1,9 @@
 package com.example.di
 
 import android.content.Context
+import com.example.BuildConfig
 import com.example.data.local.JobDatabase
+import com.example.data.remote.ApiKeyStore
 import com.example.data.remote.GeminiService
 import com.example.data.repository.JobRepositoryImpl
 import com.example.domain.repository.JobRepository
@@ -17,6 +19,8 @@ import com.example.domain.usecase.SaveJobApplicationUseCase
 interface AppContainer {
     val context: Context
     val database: JobDatabase
+    val apiKeyStore: ApiKeyStore
+    val aiProxyAvailable: Boolean
     val jobRepository: JobRepository
     val getJobApplicationsUseCase: GetJobApplicationsUseCase
     val getJobByIdUseCase: GetJobByIdUseCase
@@ -34,9 +38,19 @@ class DefaultAppContainer(override val context: Context) : AppContainer {
         JobDatabase.getInstance(context)
     }
 
-    private val geminiService: GeminiService by lazy {
-        GeminiService()
+    override val apiKeyStore: ApiKeyStore by lazy {
+        ApiKeyStore(context)
     }
+
+    private val geminiService: GeminiService by lazy {
+        GeminiService(
+            apiKeyProvider = { apiKeyStore.get() },
+            proxyUrl = BuildConfig.AI_PROXY_URL,
+            deviceIdProvider = { apiKeyStore.deviceId() }
+        )
+    }
+
+    override val aiProxyAvailable: Boolean = BuildConfig.AI_PROXY_URL.isNotBlank()
 
     override val jobRepository: JobRepository by lazy {
         JobRepositoryImpl(context, database.jobApplicationDao())

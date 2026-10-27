@@ -5,6 +5,7 @@
         <include domain="database" path="job_tracker_db-shm" />
         <include domain="database" path="job_tracker_db-wal" />
         <include domain="sharedpref" path="." />
+        <exclude domain="sharedpref" path="ai_settings.xml" />
         <include domain="file" path="." />
         <include domain="external" path="." />
     </cloud-backup>
@@ -13,6 +14,7 @@
         <include domain="database" path="job_tracker_db-shm" />
         <include domain="database" path="job_tracker_db-wal" />
         <include domain="sharedpref" path="." />
+        <exclude domain="sharedpref" path="ai_settings.xml" />
         <include domain="file" path="." />
         <include domain="external" path="." />
     </device-transfer>

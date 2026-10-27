@@ -19,13 +19,9 @@
 -dontwarn kotlinx.coroutines.**
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
 
-# OkHttp & Moshi (used for Gemini API and JSON parsing)
+# OkHttp ships its own consumer rules; only silence optional-platform warnings
 -dontwarn okhttp3.**
 -dontwarn okio.**
--keep class okhttp3.** { *; }
--keep interface okhttp3.** { *; }
--keep class com.squareup.moshi.** { *; }
--keepattributes *JavascriptInterface*
 
 # Optimize line numbers for crash reporting
 -keepattributes SourceFile,LineNumberTable

@@ -9,6 +9,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.MainActivity
 import com.example.R
+import com.example.localization.AppStrings
 import com.example.util.InterviewNotificationHelper
 
 class InterviewReminderReceiver : BroadcastReceiver() {
@@ -35,19 +36,20 @@ class InterviewReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val stageHeader = if (interviewType.isNotBlank()) "[$interviewType]" else "Interview Call"
-        val timeDisplay = if (interviewTime.isNotBlank()) "at $interviewTime" else "starting soon"
+        val strings = AppStrings.current()
+        val stageHeader = if (interviewType.isNotBlank()) "[${strings.getInterviewStageName(interviewType)}]" else strings.notifStageAlert
+        val timeDisplay = if (interviewTime.isNotBlank()) strings.notifWhenAt(interviewTime) else strings.notifWhenSoonAlert
 
         val builder = NotificationCompat.Builder(context, InterviewNotificationHelper.CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("⏰ Interview Alert: $companyName")
-            .setContentText("$stageHeader for $jobTitle $timeDisplay")
+            .setContentTitle(strings.notifAlertTitle(companyName))
+            .setContentText(strings.notifAlertContent(stageHeader, jobTitle, timeDisplay))
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
                     buildString {
-                        append("Your upcoming $stageHeader with $companyName for $jobTitle is $timeDisplay.\n")
+                        append(strings.notifAlertBig(stageHeader, companyName, jobTitle, timeDisplay)).append("\n")
                         if (interviewNotes.isNotBlank()) {
-                            append("\nMeeting Info / Notes:\n$interviewNotes")
+                            append("\n${strings.notifMeetingInfo}\n$interviewNotes")
                         }
                     }
                 )
@@ -75,7 +77,7 @@ class InterviewReminderReceiver : BroadcastReceiver() {
             )
             builder.addAction(
                 R.mipmap.ic_launcher,
-                "Join Call / Meeting",
+                strings.notifJoin,
                 meetingPendingIntent
             )
         }

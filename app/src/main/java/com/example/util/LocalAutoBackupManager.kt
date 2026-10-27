@@ -2,16 +2,15 @@ package com.example.util
 
 import android.content.Context
 import android.net.Uri
-import android.os.Environment
 import com.example.domain.model.JobApplication
 import com.example.domain.model.JobStatus
+import com.example.localization.AppStrings
 import com.example.domain.repository.JobRepository
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -22,16 +21,26 @@ object LocalAutoBackupManager {
     private const val PREFS_NAME = "job_tracker_backup_prefs"
     private const val KEY_LAST_BACKUP_TIME = "key_last_backup_time"
     private const val KEY_LAST_BACKUP_COUNT = "key_last_backup_count"
+    private const val MAX_IMPORT_BYTES = 10 * 1024 * 1024
 
     /**
      * Automatically saves a persistent copy of all job applications locally on device.
      */
     fun saveAutoBackup(context: Context, applications: List<JobApplication>) {
-        if (applications.isEmpty()) return
-
         try {
-            val jsonString = serializeApplicationsToJson(applications)
             val candidateFiles = getBackupTargetFiles(context)
+
+            // Empty DB: drop old backups, otherwise deleted jobs are resurrected by autoRestoreIfEmpty on next launch.
+            if (applications.isEmpty()) {
+                candidateFiles.forEach { runCatching { it.delete() } }
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+                    .putLong(KEY_LAST_BACKUP_TIME, 0L)
+                    .putInt(KEY_LAST_BACKUP_COUNT, 0)
+                    .apply()
+                return
+            }
+
+            val jsonString = serializeApplicationsToJson(applications)
 
             for (file in candidateFiles) {
                 try {
@@ -114,7 +123,18 @@ object LocalAutoBackupManager {
     suspend fun restoreFromUri(context: Context, uri: Uri, repository: JobRepository): Int {
         return try {
             val inputStream = context.contentResolver.openInputStream(uri) ?: return 0
-            val content = InputStreamReader(inputStream, Charsets.UTF_8).use { it.readText() }
+            val bytes = inputStream.use { input ->
+                val out = java.io.ByteArrayOutputStream()
+                val chunk = ByteArray(8192)
+                while (true) {
+                    val n = input.read(chunk)
+                    if (n < 0) break
+                    out.write(chunk, 0, n)
+                    if (out.size() > MAX_IMPORT_BYTES) return 0
+                }
+                out.toByteArray()
+            }
+            val content = String(bytes, Charsets.UTF_8)
             val apps = parseJsonToApplications(content)
             if (apps.isNotEmpty()) {
                 repository.insertApplications(apps)
@@ -138,25 +158,17 @@ object LocalAutoBackupManager {
 
         return if (lastTime > 0) {
             val dateStr = SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault()).format(Date(lastTime))
-            "Auto-Saved: $count applications ($dateStr)"
+            AppStrings.current().autoSavedInfo(count, dateStr)
         } else {
-            "Auto-Save: Ready (saves automatically on every change)"
+            AppStrings.current().autoSaveReady
         }
     }
 
     private fun getBackupTargetFiles(context: Context): List<File> {
         val list = mutableListOf<File>()
 
-        // 1. Documents directory in External Storage (Survives app reinstalls)
-        try {
-            val docsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-            val appDocs = File(docsDir, "JobTracker")
-            list.add(File(appDocs, BACKUP_FILE_NAME))
-        } catch (e: Exception) {
-            // Ignore
-        }
-
-        // 2. App-specific External Files Dir
+        // 1. App-specific External Files Dir (private on Android 10+; never the shared Documents folder,
+        //    which would expose recruiter contacts and salaries to other apps)
         try {
             val extDir = context.getExternalFilesDir(null)
             if (extDir != null) {
@@ -166,7 +178,7 @@ object LocalAutoBackupManager {
             // Ignore
         }
 
-        // 3. App-specific Internal Storage
+        // 2. App-specific Internal Storage
         try {
             list.add(File(context.filesDir, BACKUP_FILE_NAME))
         } catch (e: Exception) {

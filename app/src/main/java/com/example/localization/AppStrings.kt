@@ -4,6 +4,7 @@ import androidx.compose.runtime.compositionLocalOf
 import com.example.domain.model.JobSortOption
 import com.example.domain.model.JobStatus
 import com.example.util.AppLanguage
+import com.example.util.LanguageManager
 
 val LocalAppStrings = compositionLocalOf<AppStrings> { AppStrings.English }
 
@@ -177,6 +178,81 @@ sealed class AppStrings {
     abstract val autoFillDescNew: String
     abstract val btnFillCurrentForm: String
     abstract val btnCreateWithExtracted: String
+    abstract val apiKeyTitle: String
+    abstract val apiKeyExplainer: String
+    abstract val apiKeyGetLink: String
+    abstract val apiKeyHint: String
+    abstract val apiKeySave: String
+    abstract val apiKeyRemove: String
+    abstract val aiPrivacyNote: String
+    abstract val aiParsedOk: String
+    abstract val aiParseFailed: String
+    abstract val aiCoverFailed: String
+    abstract val aiEmailFailed: String
+    abstract val aiErrNoKey: String
+    abstract val aiErrNetwork: String
+    abstract val aiErrRateLimit: String
+    abstract val aiErrEmpty: String
+    abstract val aiErrSharedLimit: String
+    abstract val aiErrBusy: String
+    abstract val apiKeyTitleOptional: String
+    abstract val apiKeyExplainerOptional: String
+    abstract val useOwnKey: String
+    abstract fun aiErrKeyRejected(code: Int): String
+    abstract fun aiErrGeneric(code: Int, message: String): String
+
+    // Messages & toasts
+    abstract val msgDraftDiscarded: String
+    abstract fun msgApplicationDeleted(company: String): String
+    abstract val msgApplicationRestored: String
+    abstract val msgJobNotFound: String
+    abstract val errCompanyRequired: String
+    abstract val errJobTitleRequired: String
+    abstract val msgAutoFilled: String
+    abstract val msgDraftSaved: String
+    abstract val msgDraftDiscardedForm: String
+    abstract val errSaveFailed: String
+    abstract val companyNotSet: String
+    abstract fun toastRestoredCount(count: Int): String
+    abstract val toastNoValidApps: String
+    abstract fun toastRestoredPrevious(count: Int): String
+    abstract fun toastRestoredLocal(count: Int): String
+    abstract val toastNoBackup: String
+    abstract val toastSummaryCopied: String
+    abstract val toastNotifEnabled: String
+    abstract val toastNotifDenied: String
+    abstract val toastReminderScheduled: String
+    abstract val toastTestNotification: String
+    abstract val toastCopied: String
+    abstract val copyToClipboardAction: String
+    abstract fun autoSavedInfo(count: Int, date: String): String
+    abstract val autoSaveReady: String
+    abstract fun backupStatusLabel(info: String): String
+
+    // Notifications
+    abstract val notifChannelName: String
+    abstract val notifChannelDesc: String
+    abstract fun notifTestTitle(company: String): String
+    abstract fun notifAlertTitle(company: String): String
+    abstract val notifStageTest: String
+    abstract val notifStageAlert: String
+    abstract val notifWhenSoonTest: String
+    abstract val notifWhenSoonAlert: String
+    abstract fun notifWhenAt(time: String): String
+    abstract fun notifTestContent(stage: String, role: String, whenText: String): String
+    abstract fun notifTestBig(role: String, company: String, stage: String, whenText: String): String
+    abstract fun notifAlertContent(stage: String, role: String, whenText: String): String
+    abstract fun notifAlertBig(stage: String, company: String, role: String, whenText: String): String
+    abstract val notifNotesLink: String
+    abstract val notifMeetingInfo: String
+    abstract val notifJoin: String
+
+    // Export sheet actions
+    abstract val actionRestore: String
+    abstract val actionBrowse: String
+    abstract val actionShareCsv: String
+    abstract val actionShareJson: String
+    abstract val closeDesc: String
 
     // Helper functions for localized enum display
     abstract fun getStatusDisplayName(status: JobStatus): String
@@ -304,7 +380,7 @@ sealed class AppStrings {
         override val backupSheetTitle = "Data Backup & Local Auto-Sync"
         override fun applicationsTrackedCount(count: Int) = "$count applications currently tracked"
         override val persistentSyncTitle = "Persistent Local Storage Auto-Sync"
-        override val persistentSyncDesc = "All applications are saved locally to your device storage on every change. If you uninstall and reinstall, your previous data automatically restores."
+        override val persistentSyncDesc = "All applications are saved on your device after every change. If Android Backup is turned on, your data is restored when you reinstall the app or switch phones. Export a JSON copy for extra safety."
         override val restoreAndSyncSection = "RESTORE & SYNC"
         override val scanRestoreTitle = "Scan & Auto-Restore Previous Data"
         override val scanRestoreSubtitle = "Recover all previous job applications from local persistent device backup files."
@@ -348,6 +424,79 @@ sealed class AppStrings {
         override val autoFillDescNew = "Transfer details directly into a new application"
         override val btnFillCurrentForm = "Fill Into Current Form"
         override val btnCreateWithExtracted = "Create Application with Extracted Info"
+        override val apiKeyTitle = "Connect free Gemini AI"
+        override val apiKeyExplainer = "AI tools use your own free Google Gemini key. It is stored only on this device and sent only to Google. Create one in about a minute at aistudio.google.com/apikey, then paste it below."
+        override val apiKeyGetLink = "Get a free key"
+        override val apiKeyHint = "Paste Gemini API key"
+        override val apiKeySave = "Save Key"
+        override val apiKeyRemove = "Remove saved API key"
+        override val aiPrivacyNote = "Text you submit here is sent to Google Gemini, through this app's AI service unless you use your own key. On the free tier Google may use it to improve its products, so don't include sensitive personal data."
+        override val aiParsedOk = "Job parsed successfully!"
+        override val aiParseFailed = "Failed to parse job posting"
+        override val aiCoverFailed = "Failed to generate cover letter"
+        override val aiEmailFailed = "Failed to generate email draft"
+        override val aiErrNoKey = "Add your free Gemini API key to use AI tools."
+        override val aiErrNetwork = "Network error. Check your connection and try again."
+        override val aiErrRateLimit = "Free daily/minute limit reached. Wait a bit and try again."
+        override val aiErrEmpty = "Gemini returned an empty answer. Try again."
+        override val aiErrSharedLimit = "The shared free AI limit is reached for now. Try again in a minute or later today, or add your own free Gemini key for unlimited use."
+        override val aiErrBusy = "The AI service is busy right now. Please try again in a moment."
+        override val apiKeyTitleOptional = "Use your own Gemini key (optional)"
+        override val apiKeyExplainerOptional = "AI works for free out of the box, but the free quota is shared. Add your own free key from aistudio.google.com/apikey to skip the shared limit. It is stored only on this device."
+        override val useOwnKey = "Use my own key (optional)"
+        override fun aiErrKeyRejected(code: Int) = "Gemini rejected the request ($code). Check that your API key is valid."
+        override fun aiErrGeneric(code: Int, message: String) = "Gemini API error ($code): $message"
+
+        override val msgDraftDiscarded = "Draft application discarded"
+        override fun msgApplicationDeleted(company: String) = "Application for $company deleted"
+        override val msgApplicationRestored = "Application restored"
+        override val msgJobNotFound = "Job application not found"
+        override val errCompanyRequired = "Company name is required"
+        override val errJobTitleRequired = "Job title is required"
+        override val msgAutoFilled = "Auto-filled from job description!"
+        override val msgDraftSaved = "Draft saved locally"
+        override val msgDraftDiscardedForm = "Draft discarded"
+        override val errSaveFailed = "Failed to save application"
+        override val companyNotSet = "Company name not set yet"
+        override fun toastRestoredCount(count: Int) = "Successfully restored $count applications!"
+        override val toastNoValidApps = "No valid job applications found in file"
+        override fun toastRestoredPrevious(count: Int) = "🎉 Restored $count previous applications!"
+        override fun toastRestoredLocal(count: Int) = "🎉 Restored $count applications from local storage!"
+        override val toastNoBackup = "No previous backup found or data already up to date"
+        override val toastSummaryCopied = "Summary copied to clipboard!"
+        override val toastNotifEnabled = "Notifications enabled for interview alerts"
+        override val toastNotifDenied = "Notification permission denied"
+        override val toastReminderScheduled = "⏰ Interview reminder scheduled!"
+        override val toastTestNotification = "🔔 Test interview notification fired!"
+        override val toastCopied = "Copied to clipboard!"
+        override val copyToClipboardAction = "Copy to Clipboard"
+        override fun autoSavedInfo(count: Int, date: String) = "Auto-Saved: $count applications ($date)"
+        override val autoSaveReady = "Auto-Save: Ready (saves automatically on every change)"
+        override fun backupStatusLabel(info: String) = "Status: $info"
+
+        override val notifChannelName = "Interview & Timed Call Reminders"
+        override val notifChannelDesc = "Alerts for scheduled job interviews, screening calls, and meeting rounds."
+        override fun notifTestTitle(company: String) = "📅 Upcoming Interview: $company"
+        override fun notifAlertTitle(company: String) = "⏰ Interview Alert: $company"
+        override val notifStageTest = "Interview Round"
+        override val notifStageAlert = "Interview Call"
+        override val notifWhenSoonTest = "soon"
+        override val notifWhenSoonAlert = "starting soon"
+        override fun notifWhenAt(time: String) = "at $time"
+        override fun notifTestContent(stage: String, role: String, whenText: String) = "$stage $role is scheduled $whenText"
+        override fun notifTestBig(role: String, company: String, stage: String, whenText: String) =
+            "Reminder for $role at $company.\n$stage $whenText."
+        override fun notifAlertContent(stage: String, role: String, whenText: String) = "$stage for $role $whenText"
+        override fun notifAlertBig(stage: String, company: String, role: String, whenText: String) =
+            "Your upcoming $stage with $company for $role is $whenText."
+        override val notifNotesLink = "Notes/Link:"
+        override val notifMeetingInfo = "Meeting Info / Notes:"
+        override val notifJoin = "Join Call / Meeting"
+        override val actionRestore = "Restore"
+        override val actionBrowse = "Browse"
+        override val actionShareCsv = "Share CSV"
+        override val actionShareJson = "Share JSON"
+        override val closeDesc = "Close"
 
         override fun getStatusDisplayName(status: JobStatus): String = status.displayName
         override fun getSortDisplayName(sort: JobSortOption): String = sort.displayName
@@ -475,7 +624,7 @@ sealed class AppStrings {
         override val backupSheetTitle = "ডাটা ব্যাকআপ ও লোকাল অটো-সিঙ্ক"
         override fun applicationsTrackedCount(count: Int) = "$count টি আবেদন সংরক্ষিত আছে"
         override val persistentSyncTitle = "স্থায়ী ডিভাইসে অটো-সিঙ্ক"
-        override val persistentSyncDesc = "সকল আবেদন আপনার ডিভাইসে তাৎক্ষণিকভাবে সংরক্ষিত থাকে। অ্যাপ মুছে পুনরায় ইনস্টল করলেও আগের সব তথ্য ফিরে পাবেন।"
+        override val persistentSyncDesc = "প্রতিটি পরিবর্তনের পর সকল আবেদন আপনার ডিভাইসে সংরক্ষিত হয়। অ্যান্ড্রয়েড ব্যাকআপ চালু থাকলে অ্যাপ আবার ইনস্টল করলে বা ফোন বদলালে তথ্য ফিরে পাবেন। বাড়তি নিরাপত্তার জন্য JSON কপি এক্সপোর্ট করে রাখুন।"
         override val restoreAndSyncSection = "ডাটা পুনরুদ্ধার ও সিঙ্ক"
         override val scanRestoreTitle = "পূর্বের ডাটা স্ক্যান ও পুনরুদ্ধার"
         override val scanRestoreSubtitle = "ডিভাইসের অভ্যন্তরীণ ব্যাকআপ ফাইল থেকে সকল চাকরির আবেদন পুনরুদ্ধার করুন।"
@@ -517,6 +666,79 @@ sealed class AppStrings {
         override val readyToAutoFillHeader = "আবেদনে স্বয়ংক্রিয়ভাবে বসানোর জন্য প্রস্তুত"
         override val autoFillDescCurrent = "বর্তমান ফর্মে কোম্পানি, পদবী ও বেতন বসান"
         override val autoFillDescNew = "সরাসরি নতুন আবেদনে এই তথ্য স্থানান্তর করুন"
+        override val apiKeyTitle = "বিনামূল্যের জেমিনি এআই যুক্ত করুন"
+        override val apiKeyExplainer = "এআই টুল আপনার নিজের বিনামূল্যের গুগল জেমিনি কী ব্যবহার করে। কী শুধু এই ডিভাইসে থাকে এবং শুধু গুগলে পাঠানো হয়। aistudio.google.com/apikey থেকে প্রায় এক মিনিটে কী তৈরি করে নিচে পেস্ট করুন।"
+        override val apiKeyGetLink = "বিনামূল্যে কী নিন"
+        override val apiKeyHint = "জেমিনি এপিআই কী পেস্ট করুন"
+        override val apiKeySave = "কী সংরক্ষণ করুন"
+        override val apiKeyRemove = "সংরক্ষিত এপিআই কী মুছুন"
+        override val aiPrivacyNote = "এখানে দেওয়া লেখা গুগল জেমিনিতে পাঠানো হয়, নিজের কী ব্যবহার না করলে এই অ্যাপের এআই সার্ভিসের মাধ্যমে। ফ্রি টায়ারে গুগল এটি তাদের পণ্য উন্নত করতে ব্যবহার করতে পারে, তাই সংবেদনশীল ব্যক্তিগত তথ্য দেবেন না।"
+        override val aiParsedOk = "চাকরির তথ্য সফলভাবে বের করা হয়েছে!"
+        override val aiParseFailed = "চাকরির বিজ্ঞাপন বিশ্লেষণ করা যায়নি"
+        override val aiCoverFailed = "কভার লেটার তৈরি করা যায়নি"
+        override val aiEmailFailed = "ইমেইল খসড়া তৈরি করা যায়নি"
+        override val aiErrNoKey = "এআই টুল ব্যবহারে আপনার বিনামূল্যের জেমিনি এপিআই কী যুক্ত করুন।"
+        override val aiErrNetwork = "নেটওয়ার্ক সমস্যা। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।"
+        override val aiErrRateLimit = "বিনামূল্যের সীমা শেষ হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।"
+        override val aiErrEmpty = "জেমিনি কোনো উত্তর দেয়নি। আবার চেষ্টা করুন।"
+        override val aiErrSharedLimit = "শেয়ার্ড বিনামূল্যের এআই সীমা আপাতত শেষ। এক মিনিট বা পরে আবার চেষ্টা করুন, অথবা সীমাহীন ব্যবহারের জন্য নিজের বিনামূল্যের জেমিনি কী যুক্ত করুন।"
+        override val aiErrBusy = "এআই সার্ভিস এখন ব্যস্ত। একটু পরে আবার চেষ্টা করুন।"
+        override val apiKeyTitleOptional = "নিজের জেমিনি কী ব্যবহার করুন (ঐচ্ছিক)"
+        override val apiKeyExplainerOptional = "এআই বিনামূল্যেই কাজ করে, তবে বিনামূল্যের কোটা সবার মধ্যে ভাগ হয়। শেয়ার্ড সীমা এড়াতে aistudio.google.com/apikey থেকে নিজের বিনামূল্যের কী যুক্ত করুন। কী শুধু এই ডিভাইসে থাকে।"
+        override val useOwnKey = "নিজের কী ব্যবহার করুন (ঐচ্ছিক)"
+        override fun aiErrKeyRejected(code: Int) = "জেমিনি অনুরোধ গ্রহণ করেনি ($code)। আপনার এপিআই কী সঠিক কিনা দেখুন।"
+        override fun aiErrGeneric(code: Int, message: String) = "জেমিনি এপিআই ত্রুটি ($code): $message"
+
+        override val msgDraftDiscarded = "খসড়া আবেদন বাতিল করা হয়েছে"
+        override fun msgApplicationDeleted(company: String) = "$company এর আবেদন মুছে ফেলা হয়েছে"
+        override val msgApplicationRestored = "আবেদন পুনরুদ্ধার করা হয়েছে"
+        override val msgJobNotFound = "চাকরির আবেদন পাওয়া যায়নি"
+        override val errCompanyRequired = "কোম্পানির নাম আবশ্যক"
+        override val errJobTitleRequired = "পদবী আবশ্যক"
+        override val msgAutoFilled = "বিজ্ঞাপন থেকে স্বয়ংক্রিয়ভাবে পূরণ করা হয়েছে!"
+        override val msgDraftSaved = "খসড়া ডিভাইসে সংরক্ষিত হয়েছে"
+        override val msgDraftDiscardedForm = "খসড়া বাতিল করা হয়েছে"
+        override val errSaveFailed = "আবেদন সংরক্ষণ করা যায়নি"
+        override val companyNotSet = "কোম্পানির নাম এখনও দেওয়া হয়নি"
+        override fun toastRestoredCount(count: Int) = "$count টি আবেদন সফলভাবে পুনরুদ্ধার করা হয়েছে!"
+        override val toastNoValidApps = "ফাইলে কোনো বৈধ চাকরির আবেদন পাওয়া যায়নি"
+        override fun toastRestoredPrevious(count: Int) = "🎉 আগের $count টি আবেদন পুনরুদ্ধার করা হয়েছে!"
+        override fun toastRestoredLocal(count: Int) = "🎉 লোকাল স্টোরেজ থেকে $count টি আবেদন পুনরুদ্ধার করা হয়েছে!"
+        override val toastNoBackup = "কোনো আগের ব্যাকআপ পাওয়া যায়নি বা তথ্য ইতিমধ্যে হালনাগাদ আছে"
+        override val toastSummaryCopied = "সারাংশ ক্লিপবোর্ডে কপি হয়েছে!"
+        override val toastNotifEnabled = "ইন্টারভিউ অ্যালার্টের জন্য নোটিফিকেশন চালু হয়েছে"
+        override val toastNotifDenied = "নোটিফিকেশনের অনুমতি দেওয়া হয়নি"
+        override val toastReminderScheduled = "⏰ ইন্টারভিউ রিমাইন্ডার সেট হয়েছে!"
+        override val toastTestNotification = "🔔 টেস্ট ইন্টারভিউ নোটিফিকেশন পাঠানো হয়েছে!"
+        override val toastCopied = "ক্লিপবোর্ডে কপি হয়েছে!"
+        override val copyToClipboardAction = "ক্লিপবোর্ডে কপি করুন"
+        override fun autoSavedInfo(count: Int, date: String) = "অটো-সেভ: $count টি আবেদন ($date)"
+        override val autoSaveReady = "অটো-সেভ প্রস্তুত (প্রতিটি পরিবর্তনে স্বয়ংক্রিয়ভাবে সংরক্ষিত হয়)"
+        override fun backupStatusLabel(info: String) = "অবস্থা: $info"
+
+        override val notifChannelName = "ইন্টারভিউ ও কল রিমাইন্ডার"
+        override val notifChannelDesc = "নির্ধারিত ইন্টারভিউ, স্ক্রিনিং কল ও মিটিং রাউন্ডের অ্যালার্ট।"
+        override fun notifTestTitle(company: String) = "📅 আসন্ন ইন্টারভিউ: $company"
+        override fun notifAlertTitle(company: String) = "⏰ ইন্টারভিউ অ্যালার্ট: $company"
+        override val notifStageTest = "ইন্টারভিউ রাউন্ড"
+        override val notifStageAlert = "ইন্টারভিউ কল"
+        override val notifWhenSoonTest = "শীঘ্রই"
+        override val notifWhenSoonAlert = "শীঘ্রই শুরু হবে"
+        override fun notifWhenAt(time: String) = "$time এ"
+        override fun notifTestContent(stage: String, role: String, whenText: String) = "$stage $role - সময়: $whenText"
+        override fun notifTestBig(role: String, company: String, stage: String, whenText: String) =
+            "$company এ $role পদের রিমাইন্ডার।\n$stage $whenText।"
+        override fun notifAlertContent(stage: String, role: String, whenText: String) = "$role পদের $stage $whenText"
+        override fun notifAlertBig(stage: String, company: String, role: String, whenText: String) =
+            "$company এ $role পদের আপনার আসন্ন $stage $whenText।"
+        override val notifNotesLink = "নোট/লিংক:"
+        override val notifMeetingInfo = "মিটিং তথ্য / নোট:"
+        override val notifJoin = "কল / মিটিংয়ে যোগ দিন"
+        override val actionRestore = "পুনরুদ্ধার"
+        override val actionBrowse = "ফাইল বাছুন"
+        override val actionShareCsv = "CSV শেয়ার"
+        override val actionShareJson = "JSON শেয়ার"
+        override val closeDesc = "বন্ধ করুন"
         override val btnFillCurrentForm = "বর্তমান ফর্মে পূরণ করুন"
         override val btnCreateWithExtracted = "সংগৃহীত তথ্য দিয়ে আবেদন তৈরি করুন"
 
@@ -549,5 +771,8 @@ sealed class AppStrings {
             AppLanguage.ENGLISH -> English
             AppLanguage.BANGLA -> Bangla
         }
+
+        /** Strings for the language currently selected in the app (for code outside Compose). */
+        fun current(): AppStrings = get(LanguageManager.currentLanguage.value)
     }
 }

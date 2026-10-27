@@ -16,7 +16,7 @@ View your app in AI Studio: https://ai.studio/apps/893dd2a1-515c-42df-9ef3-c2a88
 1. Open Android Studio
 2. Select **Open** and choose the directory containing this project
 3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
+4. AI tools need a free Gemini API key from https://aistudio.google.com/apikey. The key is entered inside the app (AI sheet) and kept only on the device; nothing is compiled into the APK.
 5. Run the app on an emulator or physical device. Debug builds work out of the box: they use `debug.keystore` at the project root when present, otherwise the standard Android debug keystore.
 
 ## Build a Signed Release

@@ -1,7 +1,7 @@
 package com.example.data.remote
 
-import com.example.BuildConfig
 import com.example.domain.model.JobApplication
+import com.example.localization.AppStrings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -20,39 +20,83 @@ data class ParsedJobData(
     val detectedStatus: String = "Applied"
 )
 
+/** The shared (proxy) free quota is exhausted or this device is rate limited. */
+class SharedLimitException(message: String) : Exception(message)
+
+/**
+ * Talks to Gemini. If the user saved their own key it calls Google directly; otherwise, when a
+ * proxy URL is configured, it uses the shared free proxy (which holds the developer's key).
+ */
 open class GeminiService(
+    private val apiKeyProvider: () -> String = { "" },
+    private val proxyUrl: String = "",
+    private val deviceIdProvider: () -> String = { "" },
     private val client: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(60, TimeUnit.SECONDS)
+        .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 ) {
-    // Primary model is gemini-3.5-flash with fallback candidate models
+    // Stable "-latest" aliases first so the app keeps working when Google retires a version;
+    // pinned models are the fallback. 404/429/5xx automatically moves to the next candidate.
     private val candidateModels = listOf(
-        "gemini-3.8-flash",
-        "gemini-3.6-flash",
         "gemini-flash-latest",
-        "gemini-3.5-flash-lite"
+        "gemini-flash-lite-latest",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite"
     )
 
-    private fun getApiKey(): String {
-        return try {
-            BuildConfig.GEMINI_API_KEY.ifBlank {
-                System.getenv("GEMINI_API_KEY") ?: ""
-            }
-        } catch (e: Throwable) {
-            System.getenv("GEMINI_API_KEY") ?: ""
+    private companion object {
+        const val TAG = "GeminiService"
+    }
+
+    private suspend fun dispatch(tool: String, fields: Map<String, String>, prompt: String): Result<String> {
+        val apiKey = apiKeyProvider().trim()
+        return when {
+            apiKey.isNotBlank() -> callGemini(prompt, apiKey)
+            proxyUrl.isNotBlank() -> callProxy(tool, fields)
+            else -> Result.failure(IllegalStateException(AppStrings.current().aiErrNoKey))
         }
     }
 
-    private suspend fun callGemini(prompt: String): Result<String> = withContext(Dispatchers.IO) {
-        val apiKey = getApiKey()
-        if (apiKey.isBlank()) {
-            return@withContext Result.failure(
-                IllegalStateException("Gemini API key is not configured. Add GEMINI_API_KEY in Secrets.")
-            )
-        }
+    private suspend fun callProxy(tool: String, fields: Map<String, String>): Result<String> = withContext(Dispatchers.IO) {
+        val strings = AppStrings.current()
+        try {
+            val payload = JSONObject().put("tool", tool).put("fields", JSONObject(fields))
+            val request = Request.Builder()
+                .url(proxyUrl.trimEnd('/') + "/v1/ai")
+                .header("x-device-id", deviceIdProvider())
+                .post(payload.toString().toRequestBody("application/json".toMediaType()))
+                .build()
 
+            val (code, isSuccessful, body) = client.newCall(request).execute().use { response ->
+                Triple(response.code, response.isSuccessful, response.body.string())
+            }
+
+            when {
+                isSuccessful -> {
+                    val text = JSONObject(body).optString("text", "")
+                    if (text.isNotBlank()) Result.success(text) else Result.failure(Exception(strings.aiErrEmpty))
+                }
+                code == 429 -> Result.failure(SharedLimitException(strings.aiErrSharedLimit))
+                code in 502..504 -> Result.failure(Exception(strings.aiErrBusy))
+                else -> {
+                    val reason = runCatching { JSONObject(body).getJSONObject("error").optString("code") }.getOrDefault("")
+                    Result.failure(Exception(strings.aiErrGeneric(code, reason)))
+                }
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: java.io.IOException) {
+            android.util.Log.w(TAG, "Proxy request failed: $e")
+            Result.failure(Exception(strings.aiErrNetwork))
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "Proxy request error: $e")
+            Result.failure(Exception(strings.aiErrGeneric(0, e.message.orEmpty())))
+        }
+    }
+
+    private suspend fun callGemini(prompt: String, apiKey: String): Result<String> = withContext(Dispatchers.IO) {
         val jsonPayload = JSONObject().apply {
             val contents = JSONArray().apply {
                 val contentObj = JSONObject().apply {
@@ -71,16 +115,18 @@ open class GeminiService(
 
         for (model in candidateModels) {
             try {
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey"
+                val url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent"
                 val request = Request.Builder()
                     .url(url)
+                    .header("x-goog-api-key", apiKey)
                     .post(requestBody)
                     .build()
 
-                val response = client.newCall(request).execute()
-                val responseBody = response.body?.string() ?: ""
+                val (responseCode, isSuccessful, responseBody) = client.newCall(request).execute().use { response ->
+                    Triple(response.code, response.isSuccessful, response.body.string())
+                }
 
-                if (response.isSuccessful) {
+                if (isSuccessful) {
                     val rootJson = JSONObject(responseBody)
                     val candidates = rootJson.optJSONArray("candidates")
                     if (candidates != null && candidates.length() > 0) {
@@ -95,7 +141,7 @@ open class GeminiService(
                         }
                     }
                     // Empty content response from this model, try fallback
-                    lastError = Exception("Empty response from model $model")
+                    lastError = Exception(AppStrings.current().aiErrEmpty)
                     continue
                 } else {
                     val errorMsg = try {
@@ -104,24 +150,36 @@ open class GeminiService(
                     } catch (e: Exception) {
                         responseBody
                     }
-                    lastError = Exception("Gemini API error (${response.code}): $errorMsg")
+                    lastError = Exception(friendlyError(responseCode, errorMsg))
 
                     // On rate limit (429), high demand / server error (500, 502, 503, 504), or not found (404),
                     // automatically failover to the next candidate model
-                    if (response.code in listOf(404, 429, 500, 502, 503, 504)) {
+                    if (responseCode in listOf(404, 429, 500, 502, 503, 504)) {
                         kotlinx.coroutines.delay(350)
                         continue
                     } else {
                         return@withContext Result.failure(lastError)
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
-                lastError = e
+                android.util.Log.w(TAG, "Gemini request failed: $e")
+                lastError = if (e is java.io.IOException) Exception(AppStrings.current().aiErrNetwork) else e
                 kotlinx.coroutines.delay(200)
             }
         }
 
-        Result.failure(lastError ?: Exception("Failed to execute request with Gemini API"))
+        Result.failure(lastError ?: Exception(AppStrings.current().aiErrNetwork))
+    }
+
+    private fun friendlyError(code: Int, apiMessage: String): String {
+        val strings = AppStrings.current()
+        return when (code) {
+            400, 401, 403 -> strings.aiErrKeyRejected(code)
+            429 -> strings.aiErrRateLimit
+            else -> strings.aiErrGeneric(code, apiMessage)
+        }
     }
 
     // Feature 3: Job Description Auto-Parser
@@ -142,7 +200,7 @@ Job Posting Text:
 $rawText
 """.trimIndent()
 
-        val result = callGemini(prompt)
+        val result = dispatch("parse", mapOf("rawText" to rawText), prompt)
         return result.mapCatching { responseText ->
             val cleanText = responseText
                 .replace("```json", "")
@@ -216,7 +274,16 @@ Format output cleanly with:
 2. 3 Key Talking Points for Why I'm a Great Match
 """.trimIndent()
 
-        return callGemini(prompt)
+        return dispatch(
+            "cover",
+            mapOf(
+                "companyName" to companyName,
+                "jobTitle" to jobTitle,
+                "notes" to notesOrDescription,
+                "candidateHighlights" to userCandidateHighlights
+            ),
+            prompt
+        )
     }
 
     // Feature 4: Follow-up & Thank You Email Drafter
@@ -237,6 +304,16 @@ Provide:
 - Professional Email Body (polite, confident, expressing clear value and gratitude)
 """.trimIndent()
 
-        return callGemini(prompt)
+        return dispatch(
+            "followup",
+            mapOf(
+                "companyName" to application.companyName,
+                "jobTitle" to application.jobTitle,
+                "status" to application.status.displayName,
+                "notes" to application.notes,
+                "emailType" to emailType
+            ),
+            prompt
+        )
     }
 }

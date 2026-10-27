@@ -28,3 +28,8 @@ my-upload-key.jks
 # Build outputs
 build/
 brag-output-*/
+
+# ai-proxy
+ai-proxy/node_modules/
+ai-proxy/.wrangler/
+ai-proxy/.dev.vars

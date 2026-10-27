@@ -192,9 +192,9 @@ fun AddEditJobScreen(
 
     LaunchedEffect(state.draftSavedMessage) {
         state.draftSavedMessage?.let { msg ->
-            if (msg.contains("discard", ignoreCase = true)) {
+            if (msg == strings.msgDraftDiscardedForm) {
                 isDraftSaved = false
-            } else if (msg.contains("saved", ignoreCase = true)) {
+            } else if (msg == strings.msgDraftSaved) {
                 isDraftSaved = true
             }
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
@@ -210,9 +210,9 @@ fun AddEditJobScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            Toast.makeText(context, "Notifications enabled for interview alerts", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, strings.toastNotifEnabled, Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "Notification permission denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, strings.toastNotifDenied, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -234,7 +234,7 @@ fun AddEditJobScreen(
                 )
                 val scheduled = InterviewNotificationHelper.scheduleInterviewAlarm(context, tempApp)
                 if (scheduled) {
-                    Toast.makeText(context, "⏰ Exact interview reminder scheduled!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, strings.toastReminderScheduled, Toast.LENGTH_SHORT).show()
                 }
             } else if (state.id > 0) {
                 InterviewNotificationHelper.cancelInterviewAlarm(context, state.id)
@@ -1052,7 +1052,7 @@ fun AddEditJobScreen(
                                         interviewNotes = state.interviewNotes.ifBlank { "Google Meet: https://meet.google.com/abc-defg-hij" }
                                     )
                                     InterviewNotificationHelper.showTestNotification(context, testJob)
-                                    Toast.makeText(context, "🔔 Test interview notification fired!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, strings.toastTestNotification, Toast.LENGTH_SHORT).show()
                                 },
                                 style = RetroButtonStyle.Secondary,
                                 icon = Icons.Default.NotificationsActive,

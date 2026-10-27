@@ -17,14 +17,24 @@ data class AiToolsUiState(
     val parsedJobResult: ParsedJobData? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val successMessage: String? = null
-)
+    val successMessage: String? = null,
+    val hasApiKey: Boolean = true,
+    val apiKeyInput: String = "",
+    val proxyAvailable: Boolean = false,
+    val showKeyEntry: Boolean = false
+) {
+    val showKeyCard: Boolean get() = !hasApiKey && (!proxyAvailable || showKeyEntry)
+}
 
 sealed interface AiToolsUiEvent {
     data class OnSelectTool(val tool: AiToolType) : AiToolsUiEvent
     data class OnRawJobInputChange(val text: String) : AiToolsUiEvent
     data class OnCandidateProfileChange(val text: String) : AiToolsUiEvent
     data class OnEmailTypeChange(val emailType: String) : AiToolsUiEvent
+    data class OnApiKeyInputChange(val text: String) : AiToolsUiEvent
+    data object OnShowKeyEntry : AiToolsUiEvent
+    data object OnSaveApiKey : AiToolsUiEvent
+    data object OnRemoveApiKey : AiToolsUiEvent
     data object OnGenerateClick : AiToolsUiEvent
     data object OnClearOutput : AiToolsUiEvent
     data object OnResetState : AiToolsUiEvent

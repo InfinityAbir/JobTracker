@@ -219,7 +219,7 @@ fun DashboardDraftSection(
                 )
 
                 Text(
-                    text = draft.companyName.ifBlank { "Company name not set yet" },
+                    text = draft.companyName.ifBlank { strings.companyNotSet },
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (draft.companyName.isNotBlank()) draftColors.ink else colors.onSurfaceVariant.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Bold,

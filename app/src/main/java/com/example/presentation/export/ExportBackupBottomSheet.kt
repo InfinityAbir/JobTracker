@@ -85,10 +85,10 @@ fun ExportBackupBottomSheet(
                     repository = appContainer.jobRepository
                 )
                 if (restoredCount > 0) {
-                    Toast.makeText(context, "Successfully restored $restoredCount applications!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, strings.toastRestoredCount(restoredCount), Toast.LENGTH_LONG).show()
                     onDismiss()
                 } else {
-                    Toast.makeText(context, "No valid job applications found in file", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, strings.toastNoValidApps, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -150,7 +150,7 @@ fun ExportBackupBottomSheet(
                 }
                 RetroIconButton(
                     icon = Icons.Default.Close,
-                    contentDescription = "Close",
+                    contentDescription = strings.closeDesc,
                     onClick = onDismiss,
                     size = 38.dp,
                     shadowOffset = 2.dp,
@@ -203,7 +203,7 @@ fun ExportBackupBottomSheet(
                             lineHeight = 16.sp
                         )
                         Text(
-                            text = "Status: $syncInfo",
+                            text = strings.backupStatusLabel(syncInfo),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -230,7 +230,7 @@ fun ExportBackupBottomSheet(
                     title = strings.scanRestoreTitle,
                     subtitle = strings.scanRestoreSubtitle,
                     icon = Icons.Default.Refresh,
-                    actionText = "Restore",
+                    actionText = strings.actionRestore,
                     testTag = "auto_restore_card",
                     onClick = {
                         scope.launch {
@@ -239,16 +239,16 @@ fun ExportBackupBottomSheet(
                                 repository = appContainer.jobRepository
                             )
                             if (restored > 0) {
-                                Toast.makeText(context, "🎉 Restored $restored previous applications!", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, strings.toastRestoredPrevious(restored), Toast.LENGTH_LONG).show()
                                 onDismiss()
                             } else {
                                 val loaded = LocalAutoBackupManager.loadAutoBackup(context)
                                 if (loaded != null && loaded.isNotEmpty()) {
                                     appContainer.jobRepository.insertApplications(loaded)
-                                    Toast.makeText(context, "🎉 Restored ${loaded.size} applications from local storage!", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, strings.toastRestoredLocal(loaded.size), Toast.LENGTH_LONG).show()
                                     onDismiss()
                                 } else {
-                                    Toast.makeText(context, "No previous backup found or data already up to date", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, strings.toastNoBackup, Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -260,7 +260,7 @@ fun ExportBackupBottomSheet(
                     title = strings.importJsonTitle,
                     subtitle = strings.importJsonSubtitle,
                     icon = Icons.Default.FileUpload,
-                    actionText = "Browse",
+                    actionText = strings.actionBrowse,
                     testTag = "import_json_card",
                     onClick = {
                         filePickerLauncher.launch(arrayOf("application/json", "text/*"))
@@ -284,7 +284,7 @@ fun ExportBackupBottomSheet(
                 title = strings.exportCsvTitle,
                 subtitle = strings.exportCsvSubtitle,
                 icon = Icons.Default.TableChart,
-                actionText = "Share CSV",
+                actionText = strings.actionShareCsv,
                 testTag = "export_csv_card",
                 onClick = {
                     val csv = JobExportHelper.generateCsv(applications)
@@ -302,7 +302,7 @@ fun ExportBackupBottomSheet(
                 title = strings.exportJsonTitle,
                 subtitle = strings.exportJsonSubtitle,
                 icon = Icons.Default.DataObject,
-                actionText = "Share JSON",
+                actionText = strings.actionShareJson,
                 testTag = "export_json_card",
                 onClick = {
                     val json = JobExportHelper.generateJson(applications)
@@ -320,13 +320,13 @@ fun ExportBackupBottomSheet(
                 title = strings.copySummaryTitle,
                 subtitle = strings.copySummarySubtitle,
                 icon = Icons.Default.ContentCopy,
-                actionText = "Copy to Clipboard",
+                actionText = strings.copyToClipboardAction,
                 testTag = "export_clipboard_card",
                 onClick = {
                     val summary = JobExportHelper.generateSummaryMarkdown(applications)
                     val success = JobExportHelper.copyToClipboard(context, summary, "Job Applications Summary")
                     if (success) {
-                        Toast.makeText(context, "Summary copied to clipboard!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, strings.toastSummaryCopied, Toast.LENGTH_SHORT).show()
                     }
                 }
             )

@@ -1,6 +1,9 @@
 package com.example.presentation.ai
 
+import android.content.ActivityNotFoundException
 import android.content.ClipData
+import android.content.Intent
+import android.net.Uri
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
@@ -70,6 +73,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -203,6 +209,79 @@ fun AiToolsBottomSheet(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (state.showKeyCard) {
+                RetroPanel(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("api_key_card"),
+                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                    borderColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Text(
+                        text = if (state.proxyAvailable) strings.apiKeyTitleOptional else strings.apiKeyTitle,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = if (state.proxyAvailable) strings.apiKeyExplainerOptional else strings.apiKeyExplainer,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    RetroButton(
+                        text = strings.apiKeyGetLink,
+                        onClick = {
+                            try {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/apikey"))
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            } catch (e: ActivityNotFoundException) {
+                                // No browser installed
+                            }
+                        },
+                        style = RetroButtonStyle.Secondary,
+                        compact = true,
+                        modifier = Modifier.testTag("api_key_get_link")
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = state.apiKeyInput,
+                        onValueChange = { onEvent(AiToolsUiEvent.OnApiKeyInputChange(it)) },
+                        placeholder = { Text(strings.apiKeyHint) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            autoCorrectEnabled = false
+                        ),
+                        shape = RetroFieldShape,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { if (it.isFocused) hasFocus = true }
+                            .testTag("api_key_input"),
+                        colors = retroTextFieldColors()
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    RetroButton(
+                        text = strings.apiKeySave,
+                        onClick = {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                            onEvent(AiToolsUiEvent.OnSaveApiKey)
+                        },
+                        enabled = state.apiKeyInput.isNotBlank(),
+                        style = RetroButtonStyle.Primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("api_key_save_button")
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // AI Tools Tab Selector
             val tabs = listOf(
@@ -519,7 +598,7 @@ fun AiToolsBottomSheet(
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clip = ClipData.newPlainText("AI Job Assistant", state.generatedOutput)
                                 clipboard.setPrimaryClip(clip)
-                                Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, strings.toastCopied, Toast.LENGTH_SHORT).show()
                             },
                             size = 38.dp,
                             shadowOffset = 2.dp,
@@ -674,6 +753,32 @@ fun AiToolsBottomSheet(
                         }
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = strings.aiPrivacyNote,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (state.hasApiKey) {
+                Spacer(modifier = Modifier.height(8.dp))
+                RetroButton(
+                    text = strings.apiKeyRemove,
+                    onClick = { onEvent(AiToolsUiEvent.OnRemoveApiKey) },
+                    style = RetroButtonStyle.Secondary,
+                    compact = true,
+                    modifier = Modifier.testTag("api_key_remove_button")
+                )
+            } else if (state.proxyAvailable && !state.showKeyEntry) {
+                Spacer(modifier = Modifier.height(8.dp))
+                RetroButton(
+                    text = strings.useOwnKey,
+                    onClick = { onEvent(AiToolsUiEvent.OnShowKeyEntry) },
+                    style = RetroButtonStyle.Secondary,
+                    compact = true,
+                    modifier = Modifier.testTag("api_key_use_own_button")
+                )
             }
         }
     }

@@ -10,6 +10,7 @@ import com.example.domain.usecase.DeleteJobApplicationUseCase
 import com.example.domain.usecase.GetJobApplicationsUseCase
 import com.example.domain.usecase.GetStatusSummaryUseCase
 import com.example.domain.usecase.SaveJobApplicationUseCase
+import com.example.localization.AppStrings
 import com.example.util.JobDraft
 import com.example.util.JobDraftManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -134,13 +135,13 @@ class DashboardViewModel(
                 if (_isDraftFilter.value) {
                     _isDraftFilter.value = false
                 }
-                _userMessage.value = "Draft application discarded"
+                _userMessage.value = AppStrings.current().msgDraftDiscarded
             }
             is DashboardUiEvent.OnDeleteApplication -> {
                 recentlyDeletedJob = event.application
                 viewModelScope.launch {
                     deleteJobApplicationUseCase(event.application)
-                    _userMessage.value = "Application for ${event.application.companyName} deleted"
+                    _userMessage.value = AppStrings.current().msgApplicationDeleted(event.application.companyName)
                 }
             }
             is DashboardUiEvent.OnRestoreApplication -> {
@@ -153,7 +154,7 @@ class DashboardViewModel(
                     viewModelScope.launch {
                         saveJobApplicationUseCase(job.copy(id = 0))
                         recentlyDeletedJob = null
-                        _userMessage.value = "Application restored"
+                        _userMessage.value = AppStrings.current().msgApplicationRestored
                     }
                 }
             }

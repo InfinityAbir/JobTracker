@@ -8,6 +8,7 @@ import com.example.domain.model.JobStatus
 import com.example.domain.usecase.DeleteJobApplicationUseCase
 import com.example.domain.usecase.GetJobByIdUseCase
 import com.example.domain.usecase.SaveJobApplicationUseCase
+import com.example.localization.AppStrings
 import com.example.util.JobDraft
 import com.example.util.JobDraftManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,7 +92,7 @@ class AddEditJobViewModel(
                     )
                 }
             } else {
-                _uiState.update { it.copy(errorMessage = "Job application not found") }
+                _uiState.update { it.copy(errorMessage = AppStrings.current().msgJobNotFound) }
             }
         }
     }
@@ -102,7 +103,7 @@ class AddEditJobViewModel(
                 _uiState.update {
                     it.copy(
                         companyName = event.name,
-                        companyNameError = if (event.name.isBlank()) "Company name is required" else null
+                        companyNameError = if (event.name.isBlank()) AppStrings.current().errCompanyRequired else null
                     )
                 }
                 autoSaveDraftIfNew()
@@ -111,7 +112,7 @@ class AddEditJobViewModel(
                 _uiState.update {
                     it.copy(
                         jobTitle = event.title,
-                        jobTitleError = if (event.title.isBlank()) "Job title is required" else null
+                        jobTitleError = if (event.title.isBlank()) AppStrings.current().errJobTitleRequired else null
                     )
                 }
                 autoSaveDraftIfNew()
@@ -207,7 +208,7 @@ class AddEditJobViewModel(
                         notes = if (event.notes.isNotBlank()) {
                             if (it.notes.isBlank()) event.notes else "${it.notes}\n\n${event.notes}"
                         } else it.notes,
-                        draftSavedMessage = "Auto-filled from job description!"
+                        draftSavedMessage = AppStrings.current().msgAutoFilled
                     )
                 }
                 autoSaveDraftIfNew()
@@ -262,7 +263,7 @@ class AddEditJobViewModel(
                 reminderMinutesBefore = s.reminderMinutesBefore
             )
             JobDraftManager.saveDraft(context, draft)
-            _uiState.update { it.copy(draftSavedMessage = "Draft saved locally") }
+            _uiState.update { it.copy(draftSavedMessage = AppStrings.current().msgDraftSaved) }
         }
     }
 
@@ -274,7 +275,7 @@ class AddEditJobViewModel(
         _uiState.update {
             AddEditJobUiState(
                 dateApplied = today,
-                draftSavedMessage = "Draft discarded"
+                draftSavedMessage = AppStrings.current().msgDraftDiscardedForm
             )
         }
     }
@@ -284,12 +285,12 @@ class AddEditJobViewModel(
         var hasError = false
 
         if (currentState.companyName.isBlank()) {
-            _uiState.update { it.copy(companyNameError = "Company name is required") }
+            _uiState.update { it.copy(companyNameError = AppStrings.current().errCompanyRequired) }
             hasError = true
         }
 
         if (currentState.jobTitle.isBlank()) {
-            _uiState.update { it.copy(jobTitleError = "Job title is required") }
+            _uiState.update { it.copy(jobTitleError = AppStrings.current().errJobTitleRequired) }
             hasError = true
         }
 
@@ -329,7 +330,7 @@ class AddEditJobViewModel(
                 _uiState.update {
                     it.copy(
                         isSaving = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to save application"
+                        errorMessage = result.exceptionOrNull()?.message ?: AppStrings.current().errSaveFailed
                     )
                 }
             }

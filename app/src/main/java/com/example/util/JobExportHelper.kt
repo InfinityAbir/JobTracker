@@ -41,8 +41,14 @@ object JobExportHelper {
         return sb.toString()
     }
 
+    private val phoneLike = Regex("""^\+[\d\s()-]+$""")
+
     private fun escapeCsv(value: String): String {
         var formatted = value
+        // Spreadsheet formula injection: cells may hold text pasted from untrusted job posts.
+        if (formatted.isNotEmpty() && formatted[0] in "=+-@\t\r" && !phoneLike.matches(formatted)) {
+            formatted = "'$formatted"
+        }
         if (formatted.contains("\"") || formatted.contains(",") || formatted.contains("\n") || formatted.contains("\r")) {
             formatted = formatted.replace("\"", "\"\"")
             return "\"$formatted\""

@@ -14,6 +14,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.example.MainActivity
 import com.example.R
 import com.example.domain.model.JobApplication
+import com.example.localization.AppStrings
 import com.example.receiver.InterviewReminderReceiver
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -23,8 +24,6 @@ import java.util.Locale
 object InterviewNotificationHelper {
 
     const val CHANNEL_ID = "interview_reminders_channel"
-    const val CHANNEL_NAME = "Interview & Timed Call Reminders"
-    const val CHANNEL_DESC = "Exact alerts for scheduled job interviews, screening calls, and meeting rounds."
 
     const val EXTRA_JOB_ID = "extra_job_id"
     const val EXTRA_COMPANY_NAME = "extra_company_name"
@@ -36,8 +35,9 @@ object InterviewNotificationHelper {
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
-                description = CHANNEL_DESC
+            val strings = AppStrings.current()
+            val channel = NotificationChannel(CHANNEL_ID, strings.notifChannelName, importance).apply {
+                description = strings.notifChannelDesc
                 enableLights(true)
                 enableVibration(true)
                 setShowBadge(true)
@@ -125,7 +125,7 @@ object InterviewNotificationHelper {
             putExtra(EXTRA_JOB_TITLE, job.jobTitle)
             putExtra(EXTRA_INTERVIEW_TYPE, job.interviewType)
             putExtra(EXTRA_INTERVIEW_NOTES, job.interviewNotes)
-            putExtra(EXTRA_INTERVIEW_TIME, job.interviewTime.ifBlank { "Scheduled" })
+            putExtra(EXTRA_INTERVIEW_TIME, job.interviewTime)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -203,17 +203,18 @@ object InterviewNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val stageText = if (job.interviewType.isNotBlank()) "[${job.interviewType}]" else "[Interview Round]"
-        val timeDisplay = if (job.interviewTime.isNotBlank()) "at ${job.interviewTime}" else "soon"
-        val noteSnippet = if (job.interviewNotes.isNotBlank()) "\nNotes/Link: ${job.interviewNotes}" else ""
+        val strings = AppStrings.current()
+        val stageText = if (job.interviewType.isNotBlank()) "[${strings.getInterviewStageName(job.interviewType)}]" else "[${strings.notifStageTest}]"
+        val timeDisplay = if (job.interviewTime.isNotBlank()) strings.notifWhenAt(job.interviewTime) else strings.notifWhenSoonTest
+        val noteSnippet = if (job.interviewNotes.isNotBlank()) "\n${strings.notifNotesLink} ${job.interviewNotes}" else ""
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("📅 Upcoming Interview: ${job.companyName}")
-            .setContentText("$stageText ${job.jobTitle} is scheduled $timeDisplay$noteSnippet")
+            .setContentTitle(strings.notifTestTitle(job.companyName))
+            .setContentText(strings.notifTestContent(stageText, job.jobTitle, timeDisplay) + noteSnippet)
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("Reminder for ${job.jobTitle} at ${job.companyName}.\n$stageText $timeDisplay.$noteSnippet")
+                    .bigText(strings.notifTestBig(job.jobTitle, job.companyName, stageText, timeDisplay) + noteSnippet)
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
