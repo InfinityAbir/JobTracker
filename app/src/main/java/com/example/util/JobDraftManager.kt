@@ -22,6 +22,14 @@ data class JobDraft(
     val interviewNotes: String = "",
     val reminderSet: Boolean = false,
     val reminderMinutesBefore: Int = 15,
+    val workModel: String = "",
+    val offerTotalComp: String = "",
+    val offerBenefits: String = "",
+    val offerPros: String = "",
+    val offerCons: String = "",
+    val prepQuestions: String = "",
+    val prepStar: String = "",
+    val prepNegotiation: String = "",
     val savedAtTimestamp: Long = System.currentTimeMillis()
 ) {
     fun isNotEmpty(): Boolean {
@@ -34,7 +42,13 @@ data class JobDraft(
                 recruiterPhone.isNotBlank() ||
                 referralSource.isNotBlank() ||
                 interviewDate.isNotBlank() ||
-                interviewNotes.isNotBlank()
+                interviewNotes.isNotBlank() ||
+                offerTotalComp.isNotBlank() ||
+                offerPros.isNotBlank() ||
+                offerCons.isNotBlank() ||
+                prepQuestions.isNotBlank() ||
+                prepStar.isNotBlank() ||
+                prepNegotiation.isNotBlank()
     }
 }
 
@@ -70,6 +84,14 @@ object JobDraftManager {
                 put("interviewNotes", draft.interviewNotes)
                 put("reminderSet", draft.reminderSet)
                 put("reminderMinutesBefore", draft.reminderMinutesBefore)
+                put("workModel", draft.workModel)
+                put("offerTotalComp", draft.offerTotalComp)
+                put("offerBenefits", draft.offerBenefits)
+                put("offerPros", draft.offerPros)
+                put("offerCons", draft.offerCons)
+                put("prepQuestions", draft.prepQuestions)
+                put("prepStar", draft.prepStar)
+                put("prepNegotiation", draft.prepNegotiation)
                 put("savedAtTimestamp", System.currentTimeMillis())
             }
             getPrefs(context).edit().putString(KEY_NEW_JOB_DRAFT, json.toString()).apply()
@@ -106,6 +128,14 @@ object JobDraftManager {
                 interviewNotes = json.optString("interviewNotes", ""),
                 reminderSet = json.optBoolean("reminderSet", false),
                 reminderMinutesBefore = json.optInt("reminderMinutesBefore", 15),
+                workModel = json.optString("workModel", ""),
+                offerTotalComp = json.optString("offerTotalComp", ""),
+                offerBenefits = json.optString("offerBenefits", ""),
+                offerPros = json.optString("offerPros", ""),
+                offerCons = json.optString("offerCons", ""),
+                prepQuestions = json.optString("prepQuestions", ""),
+                prepStar = json.optString("prepStar", ""),
+                prepNegotiation = json.optString("prepNegotiation", ""),
                 savedAtTimestamp = json.optLong("savedAtTimestamp", System.currentTimeMillis())
             )
 

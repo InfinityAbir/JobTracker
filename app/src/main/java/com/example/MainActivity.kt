@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.domain.model.JobStatus
 import com.example.presentation.JobViewModelFactory
+import com.example.presentation.ai.AiToolType
 import com.example.presentation.ai.AiToolsBottomSheet
 import com.example.presentation.ai.AiToolsViewModel
 import com.example.presentation.dashboard.DashboardScreen
@@ -85,6 +86,7 @@ fun JobTrackerNavigation(
     var showAiBottomSheet by remember { mutableStateOf(false) }
     var activeJobIdForAi by remember { mutableStateOf(0L) }
     var isAiFromExistingForm by remember { mutableStateOf(false) }
+    var aiInitialTool by remember { mutableStateOf<AiToolType?>(null) }
     var pendingAutoFillCallback by remember { mutableStateOf<((com.example.data.remote.ParsedJobData) -> Unit)?>(null) }
 
     NavHost(
@@ -122,6 +124,7 @@ fun JobTrackerNavigation(
                 },
                 onOpenAiTools = {
                     activeJobIdForAi = 0L
+                    aiInitialTool = null
                     isAiFromExistingForm = false
                     pendingAutoFillCallback = { parsed ->
                         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -141,7 +144,15 @@ fun JobTrackerNavigation(
                 },
                 currentLanguage = currentLanguage,
                 onLanguageChange = onLanguageChange,
-                appContainer = appContainer
+                appContainer = appContainer,
+                onFollowUp = { jobId ->
+                    // Stale-card shortcut: AI sheet opens on the follow-up tool for that job.
+                    activeJobIdForAi = jobId
+                    aiInitialTool = AiToolType.FollowUpEmail
+                    isAiFromExistingForm = false
+                    pendingAutoFillCallback = null
+                    showAiBottomSheet = true
+                }
             )
         }
 
@@ -173,6 +184,7 @@ fun JobTrackerNavigation(
                 },
                 onOpenAiTools = {
                     activeJobIdForAi = 0L
+                    aiInitialTool = null
                     isAiFromExistingForm = true
                     pendingAutoFillCallback = { parsed ->
                         addEditJobViewModel.onEvent(
@@ -228,6 +240,7 @@ fun JobTrackerNavigation(
                 },
                 onOpenAiTools = {
                     activeJobIdForAi = jobId
+                    aiInitialTool = null
                     isAiFromExistingForm = true
                     pendingAutoFillCallback = { parsed ->
                         addEditJobViewModel.onEvent(
@@ -250,8 +263,8 @@ fun JobTrackerNavigation(
 
     if (showAiBottomSheet) {
         val aiViewModel: AiToolsViewModel = viewModel(
-            key = "ai_tools_${activeJobIdForAi}",
-            factory = JobViewModelFactory(appContainer, jobId = activeJobIdForAi)
+            key = "ai_tools_${activeJobIdForAi}_${aiInitialTool?.let { it::class.simpleName } ?: "default"}",
+            factory = JobViewModelFactory(appContainer, jobId = activeJobIdForAi, initialAiTool = aiInitialTool)
         )
         val aiState by aiViewModel.uiState.collectAsStateWithLifecycle()
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)

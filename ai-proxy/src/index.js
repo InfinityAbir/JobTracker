@@ -14,7 +14,7 @@ const HEDGE_MS = 6_000;
 const MAX_PARALLEL = 2;
 const TOTAL_BUDGET_MS = 40_000;
 
-const MAX_BODY_BYTES = 20_000;
+const MAX_BODY_BYTES = 32_000;
 const MAX_OUTPUT_TOKENS = 1500;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -24,6 +24,8 @@ const FIELD_LIMITS = {
   jobTitle: 200,
   notes: 6000,
   candidateHighlights: 2000,
+  resume: 4000,
+  dateApplied: 20,
   status: 50,
   emailType: 100,
 };
@@ -72,6 +74,29 @@ Format output cleanly with:
 2. 3 Key Talking Points for Why I'm a Great Match`.trim();
   },
 
+  match(f) {
+    const jobDescription = clean(f, "rawText");
+    const resume = clean(f, "resume");
+    if (!jobDescription || !resume) return null;
+    return `
+You are an expert recruiter and ATS (Applicant Tracking System) analyst. Compare the candidate's resume / skills summary with the job description.
+Output MUST BE ONLY a raw valid JSON object without markdown fences or extra explanations.
+JSON schema:
+{
+  "matchPercent": 0,
+  "strengths": ["exactly 3 short phrases: what in the resume fits this job best"],
+  "missingKeywords": ["up to 8 important skills or keywords from the job description that the resume does not show"],
+  "tip": "one short sentence on the single most useful thing to add or emphasise"
+}
+matchPercent is an integer from 0 to 100 reflecting how well the resume covers the job's requirements.
+
+Job Description:
+${jobDescription}
+
+Candidate Resume / Skills Summary:
+${resume}`.trim();
+  },
+
   followup(f) {
     const companyName = clean(f, "companyName");
     const jobTitle = clean(f, "jobTitle");
@@ -82,6 +107,7 @@ Draft a polished, professional email for the following job application stage:
 - Company: ${companyName}
 - Role: ${jobTitle}
 - Current Application Status: ${clean(f, "status")}
+- Date Applied: ${clean(f, "dateApplied") || "unknown"}
 - Application Notes / Context: ${clean(f, "notes")}
 
 Provide:

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,6 +34,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FactCheck
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Business
@@ -79,6 +81,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.remote.MatchAnalysisResult
 import com.example.data.remote.ParsedJobData
 import com.example.localization.LocalAppStrings
 import com.example.presentation.components.RetroButton
@@ -287,7 +290,8 @@ fun AiToolsBottomSheet(
             val tabs = listOf(
                 Triple(AiToolType.AutoParseJob, strings.tabJobParser, Icons.AutoMirrored.Filled.FactCheck),
                 Triple(AiToolType.CoverLetter, strings.tabCoverLetter, Icons.Default.Description),
-                Triple(AiToolType.FollowUpEmail, strings.tabFollowUp, Icons.Default.Email)
+                Triple(AiToolType.FollowUpEmail, strings.tabFollowUp, Icons.Default.Email),
+                Triple(AiToolType.MatchAnalysis, strings.tabMatch, Icons.Default.Analytics)
             )
 
             Row(
@@ -309,22 +313,24 @@ fun AiToolsBottomSheet(
                             .background(background)
                             .clickable(onClick = { onEvent(AiToolsUiEvent.OnSelectTool(tool)) })
                             .testTag("ai_tool_tab_${tool::class.simpleName}")
-                            .padding(vertical = 9.dp),
+                            .padding(vertical = 8.dp, horizontal = 2.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
                         ) {
-                            Icon(imageVector = icon, contentDescription = label, tint = content, modifier = Modifier.size(16.dp))
+                            Icon(imageVector = icon, contentDescription = null, tint = content, modifier = Modifier.size(18.dp))
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    letterSpacing = 0.6.sp
+                                    fontSize = 10.sp,
+                                    letterSpacing = 0.2.sp
                                 ),
                                 color = content,
-                                maxLines = 1
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -339,6 +345,7 @@ fun AiToolsBottomSheet(
                     AiToolType.AutoParseJob -> strings.parserExplainer
                     AiToolType.CoverLetter -> strings.coverLetterExplainer
                     AiToolType.FollowUpEmail -> strings.followUpExplainer
+                    AiToolType.MatchAnalysis -> strings.matchExplainer
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -428,6 +435,50 @@ fun AiToolsBottomSheet(
                     )
                 }
 
+                AiToolType.MatchAnalysis -> {
+                    Text(
+                        text = strings.matchJobLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = state.rawJobInput,
+                        onValueChange = { onEvent(AiToolsUiEvent.OnRawJobInputChange(it)) },
+                        placeholder = { Text(strings.matchJobPlaceholder) },
+                        minLines = 4,
+                        maxLines = 8,
+                        shape = RetroFieldShape,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { if (it.isFocused) hasFocus = true }
+                            .testTag("match_job_input"),
+                        colors = retroTextFieldColors()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = strings.matchResumeLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = state.candidateProfileInput,
+                        onValueChange = { onEvent(AiToolsUiEvent.OnCandidateProfileChange(it)) },
+                        placeholder = { Text(strings.matchResumePlaceholder) },
+                        minLines = 4,
+                        maxLines = 8,
+                        shape = RetroFieldShape,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { if (it.isFocused) hasFocus = true }
+                            .testTag("match_resume_input"),
+                        colors = retroTextFieldColors()
+                    )
+                }
+
                 AiToolType.FollowUpEmail -> {
                     Text(
                         text = strings.emailScenarioLabel,
@@ -509,6 +560,7 @@ fun AiToolsBottomSheet(
                     AiToolType.AutoParseJob -> strings.btnExtractJob
                     AiToolType.CoverLetter -> strings.btnGenerateCoverLetter
                     AiToolType.FollowUpEmail -> strings.btnDraftEmail
+                    AiToolType.MatchAnalysis -> strings.btnAnalyzeMatch
                 },
                 onClick = {
                     keyboardController?.hide()
@@ -628,11 +680,15 @@ fun AiToolsBottomSheet(
                                 .weight(1f)
                                 .padding(13.dp)
                         ) {
-                            Text(
-                                text = state.generatedOutput,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            if (state.matchResult != null) {
+                                MatchResultPanel(state.matchResult)
+                            } else {
+                                Text(
+                                    text = state.generatedOutput,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
                 }
@@ -778,6 +834,132 @@ fun AiToolsBottomSheet(
                     style = RetroButtonStyle.Secondary,
                     compact = true,
                     modifier = Modifier.testTag("api_key_use_own_button")
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun MatchResultPanel(result: MatchAnalysisResult) {
+    val strings = LocalAppStrings.current
+    val colors = MaterialTheme.colorScheme
+    val scoreColor = when {
+        result.matchPercent >= 75 -> colors.secondary
+        result.matchPercent >= 50 -> colors.primary
+        else -> colors.error
+    }
+
+    Column(
+        modifier = Modifier.testTag("match_result_panel"),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = "${result.matchPercent}%",
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Black,
+                color = scoreColor,
+                modifier = Modifier.testTag("match_percent")
+            )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text(
+                    text = strings.matchScoreLabel.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.4.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurfaceVariant
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(colors.surface)
+                        .border(1.5.dp, colors.outline, RoundedCornerShape(2.dp))
+                ) {
+                    if (result.matchPercent > 0) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(result.matchPercent / 100f)
+                                .height(10.dp)
+                                .background(scoreColor)
+                        )
+                    }
+                }
+            }
+        }
+
+        if (result.strengths.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = strings.matchStrengthsHeader,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+                result.strengths.forEach { strength ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Done,
+                            contentDescription = null,
+                            tint = colors.secondary,
+                            modifier = Modifier
+                                .padding(top = 2.dp)
+                                .size(14.dp)
+                        )
+                        Text(
+                            text = strength,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurface
+                        )
+                    }
+                }
+            }
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = strings.matchMissingHeader,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = colors.onSurface
+            )
+            if (result.missingKeywords.isEmpty()) {
+                Text(
+                    text = strings.matchNoGaps,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+            } else {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    result.missingKeywords.forEach { keyword ->
+                        RetroTag(
+                            text = keyword,
+                            color = colors.onErrorContainer,
+                            borderColor = colors.error,
+                            backgroundColor = colors.errorContainer.copy(alpha = 0.55f)
+                        )
+                    }
+                }
+            }
+        }
+
+        if (result.tip.isNotBlank()) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = strings.matchTipHeader,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = result.tip,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurface
                 )
             }
         }

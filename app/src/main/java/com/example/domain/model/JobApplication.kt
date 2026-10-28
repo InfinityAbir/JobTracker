@@ -39,8 +39,44 @@ data class JobApplication(
     val interviewNotes: String = "",
     val reminderSet: Boolean = false,
     val reminderMinutesBefore: Int = 15,
-    val createdAt: Long = System.currentTimeMillis()
-)
+    val createdAt: Long = System.currentTimeMillis(),
+    val workModel: String = "",
+    val offerTotalComp: String = "",
+    /** Comma-separated [OfferBenefit] keys. */
+    val offerBenefits: String = "",
+    /** One point per line. */
+    val offerPros: String = "",
+    val offerCons: String = "",
+    val prepQuestions: String = "",
+    val prepStar: String = "",
+    val prepNegotiation: String = "",
+    /** Epoch millis of the first move to Interviewing/Offer; 0 = unknown (older records). */
+    val interviewingAt: Long = 0,
+    /** Epoch millis when a follow-up email was last drafted; 0 = never. */
+    val lastFollowUpAt: Long = 0
+) {
+    val benefitKeys: Set<String>
+        get() = offerBenefits.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+}
+
+enum class WorkModel(val key: String) {
+    REMOTE("Remote"), HYBRID("Hybrid"), ONSITE("Onsite");
+
+    companion object {
+        fun fromKey(key: String): WorkModel? = entries.firstOrNull { it.key.equals(key, ignoreCase = true) }
+    }
+}
+
+/** Benefits offered as a checklist when comparing offers. [key] is what gets stored. */
+enum class OfferBenefit(val key: String) {
+    HEALTH("Health insurance"),
+    EQUITY("Equity / stock"),
+    RETIREMENT("Retirement / provident fund"),
+    BONUS("Annual bonus"),
+    PAID_LEAVE("Generous paid leave"),
+    LEARNING("Learning budget"),
+    FLEXIBLE("Flexible hours")
+}
 
 data class StatusSummary(
     val total: Int = 0,

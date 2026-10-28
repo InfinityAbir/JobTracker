@@ -7,6 +7,7 @@ import com.example.data.remote.ApiKeyStore
 import com.example.data.remote.GeminiService
 import com.example.data.repository.JobRepositoryImpl
 import com.example.domain.repository.JobRepository
+import com.example.domain.usecase.AnalyzeResumeMatchUseCase
 import com.example.domain.usecase.DeleteJobApplicationUseCase
 import com.example.domain.usecase.GenerateCoverLetterUseCase
 import com.example.domain.usecase.GenerateFollowUpEmailUseCase
@@ -30,6 +31,7 @@ interface AppContainer {
     val parseJobDescriptionUseCase: ParseJobDescriptionUseCase
     val generateCoverLetterUseCase: GenerateCoverLetterUseCase
     val generateFollowUpEmailUseCase: GenerateFollowUpEmailUseCase
+    val analyzeResumeMatchUseCase: AnalyzeResumeMatchUseCase
 }
 
 class DefaultAppContainer(override val context: Context) : AppContainer {
@@ -87,5 +89,8 @@ class DefaultAppContainer(override val context: Context) : AppContainer {
     override val generateFollowUpEmailUseCase: GenerateFollowUpEmailUseCase by lazy {
         GenerateFollowUpEmailUseCase(geminiService)
     }
-}
 
+    override val analyzeResumeMatchUseCase: AnalyzeResumeMatchUseCase by lazy {
+        AnalyzeResumeMatchUseCase(geminiService)
+    }
+}

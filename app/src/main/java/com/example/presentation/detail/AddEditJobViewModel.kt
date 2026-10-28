@@ -57,6 +57,14 @@ class AddEditJobViewModel(
                         interviewNotes = draft.interviewNotes,
                         reminderSet = draft.reminderSet,
                         reminderMinutesBefore = draft.reminderMinutesBefore,
+                        workModel = draft.workModel,
+                        offerTotalComp = draft.offerTotalComp,
+                        offerBenefits = draft.offerBenefits,
+                        offerPros = draft.offerPros,
+                        offerCons = draft.offerCons,
+                        prepQuestions = draft.prepQuestions,
+                        prepStar = draft.prepStar,
+                        prepNegotiation = draft.prepNegotiation,
                         isDraftRestored = true
                     )
                 }
@@ -88,7 +96,15 @@ class AddEditJobViewModel(
                         interviewType = job.interviewType,
                         interviewNotes = job.interviewNotes,
                         reminderSet = job.reminderSet,
-                        reminderMinutesBefore = job.reminderMinutesBefore
+                        reminderMinutesBefore = job.reminderMinutesBefore,
+                        workModel = job.workModel,
+                        offerTotalComp = job.offerTotalComp,
+                        offerBenefits = job.offerBenefits,
+                        offerPros = job.offerPros,
+                        offerCons = job.offerCons,
+                        prepQuestions = job.prepQuestions,
+                        prepStar = job.prepStar,
+                        prepNegotiation = job.prepNegotiation
                     )
                 }
             } else {
@@ -173,6 +189,42 @@ class AddEditJobViewModel(
                 _uiState.update { it.copy(reminderMinutesBefore = event.minutes) }
                 autoSaveDraftIfNew()
             }
+            is AddEditJobUiEvent.OnWorkModelChange -> {
+                _uiState.update { it.copy(workModel = event.model) }
+                autoSaveDraftIfNew()
+            }
+            is AddEditJobUiEvent.OnOfferTotalCompChange -> {
+                _uiState.update { it.copy(offerTotalComp = event.value) }
+                autoSaveDraftIfNew()
+            }
+            is AddEditJobUiEvent.OnOfferBenefitToggle -> {
+                _uiState.update {
+                    val current = it.offerBenefits.split(',').map { b -> b.trim() }.filter { b -> b.isNotEmpty() }
+                    val updated = if (event.key in current) current - event.key else current + event.key
+                    it.copy(offerBenefits = updated.joinToString(","))
+                }
+                autoSaveDraftIfNew()
+            }
+            is AddEditJobUiEvent.OnOfferProsChange -> {
+                _uiState.update { it.copy(offerPros = event.value) }
+                autoSaveDraftIfNew()
+            }
+            is AddEditJobUiEvent.OnOfferConsChange -> {
+                _uiState.update { it.copy(offerCons = event.value) }
+                autoSaveDraftIfNew()
+            }
+            is AddEditJobUiEvent.OnPrepQuestionsChange -> {
+                _uiState.update { it.copy(prepQuestions = event.value) }
+                autoSaveDraftIfNew()
+            }
+            is AddEditJobUiEvent.OnPrepStarChange -> {
+                _uiState.update { it.copy(prepStar = event.value) }
+                autoSaveDraftIfNew()
+            }
+            is AddEditJobUiEvent.OnPrepNegotiationChange -> {
+                _uiState.update { it.copy(prepNegotiation = event.value) }
+                autoSaveDraftIfNew()
+            }
             AddEditJobUiEvent.OnTestNotificationClick -> {
                 _uiState.update { it.copy(testNotificationSent = true) }
             }
@@ -216,53 +268,45 @@ class AddEditJobViewModel(
         }
     }
 
+    private fun currentDraft(): JobDraft {
+        val s = _uiState.value
+        return JobDraft(
+            companyName = s.companyName,
+            jobTitle = s.jobTitle,
+            dateApplied = s.dateApplied,
+            status = s.status,
+            salary = s.salary,
+            notes = s.notes,
+            recruiterName = s.recruiterName,
+            recruiterEmail = s.recruiterEmail,
+            recruiterPhone = s.recruiterPhone,
+            referralSource = s.referralSource,
+            interviewDate = s.interviewDate,
+            interviewTime = s.interviewTime,
+            interviewType = s.interviewType,
+            interviewNotes = s.interviewNotes,
+            reminderSet = s.reminderSet,
+            reminderMinutesBefore = s.reminderMinutesBefore,
+            workModel = s.workModel,
+            offerTotalComp = s.offerTotalComp,
+            offerBenefits = s.offerBenefits,
+            offerPros = s.offerPros,
+            offerCons = s.offerCons,
+            prepQuestions = s.prepQuestions,
+            prepStar = s.prepStar,
+            prepNegotiation = s.prepNegotiation
+        )
+    }
+
     private fun autoSaveDraftIfNew() {
         if (jobId == 0L && context != null) {
-            val s = _uiState.value
-            val draft = JobDraft(
-                companyName = s.companyName,
-                jobTitle = s.jobTitle,
-                dateApplied = s.dateApplied,
-                status = s.status,
-                salary = s.salary,
-                notes = s.notes,
-                recruiterName = s.recruiterName,
-                recruiterEmail = s.recruiterEmail,
-                recruiterPhone = s.recruiterPhone,
-                referralSource = s.referralSource,
-                interviewDate = s.interviewDate,
-                interviewTime = s.interviewTime,
-                interviewType = s.interviewType,
-                interviewNotes = s.interviewNotes,
-                reminderSet = s.reminderSet,
-                reminderMinutesBefore = s.reminderMinutesBefore
-            )
-            JobDraftManager.saveDraft(context, draft)
+            JobDraftManager.saveDraft(context, currentDraft())
         }
     }
 
     private fun manualSaveDraft() {
         if (context != null) {
-            val s = _uiState.value
-            val draft = JobDraft(
-                companyName = s.companyName,
-                jobTitle = s.jobTitle,
-                dateApplied = s.dateApplied,
-                status = s.status,
-                salary = s.salary,
-                notes = s.notes,
-                recruiterName = s.recruiterName,
-                recruiterEmail = s.recruiterEmail,
-                recruiterPhone = s.recruiterPhone,
-                referralSource = s.referralSource,
-                interviewDate = s.interviewDate,
-                interviewTime = s.interviewTime,
-                interviewType = s.interviewType,
-                interviewNotes = s.interviewNotes,
-                reminderSet = s.reminderSet,
-                reminderMinutesBefore = s.reminderMinutesBefore
-            )
-            JobDraftManager.saveDraft(context, draft)
+            JobDraftManager.saveDraft(context, currentDraft())
             _uiState.update { it.copy(draftSavedMessage = AppStrings.current().msgDraftSaved) }
         }
     }
@@ -299,6 +343,11 @@ class AddEditJobViewModel(
         _uiState.update { it.copy(isSaving = true) }
 
         viewModelScope.launch {
+            // Timestamps are not editable in the form, so carry them over from the stored record
+            // (the AI sheet may have updated lastFollowUpAt while this screen was open).
+            val stored = if (currentState.id > 0) getJobByIdUseCase.getDirect(currentState.id) else null
+            val movedIntoInterviews = stored?.status == JobStatus.APPLIED &&
+                (currentState.status == JobStatus.INTERVIEWING || currentState.status == JobStatus.OFFER)
             val application = JobApplication(
                 id = currentState.id,
                 companyName = currentState.companyName.trim(),
@@ -316,7 +365,19 @@ class AddEditJobViewModel(
                 interviewType = currentState.interviewType.trim(),
                 interviewNotes = currentState.interviewNotes.trim(),
                 reminderSet = currentState.reminderSet,
-                reminderMinutesBefore = currentState.reminderMinutesBefore
+                reminderMinutesBefore = currentState.reminderMinutesBefore,
+                createdAt = stored?.createdAt ?: System.currentTimeMillis(),
+                workModel = currentState.workModel.trim(),
+                offerTotalComp = currentState.offerTotalComp.trim(),
+                offerBenefits = currentState.offerBenefits.trim(),
+                offerPros = currentState.offerPros.trim(),
+                offerCons = currentState.offerCons.trim(),
+                prepQuestions = currentState.prepQuestions.trim(),
+                prepStar = currentState.prepStar.trim(),
+                prepNegotiation = currentState.prepNegotiation.trim(),
+                // Only a real Applied -> Interviewing/Offer move is timed; legacy records stay "unknown".
+                interviewingAt = if (movedIntoInterviews) System.currentTimeMillis() else stored?.interviewingAt ?: 0L,
+                lastFollowUpAt = stored?.lastFollowUpAt ?: 0L
             )
 
             val result = saveJobApplicationUseCase(application)
@@ -330,7 +391,7 @@ class AddEditJobViewModel(
                 _uiState.update {
                     it.copy(
                         isSaving = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: AppStrings.current().errSaveFailed
+                        errorMessage = AppStrings.current().errSaveFailed
                     )
                 }
             }

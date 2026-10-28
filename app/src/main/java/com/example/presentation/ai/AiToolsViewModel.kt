@@ -2,11 +2,14 @@ package com.example.presentation.ai
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.data.remote.AiUserMessageException
 import com.example.data.remote.ApiKeyStore
+import com.example.data.remote.MatchAnalysisResult
 import com.example.data.remote.ParsedJobData
 import com.example.data.remote.SharedLimitException
 import com.example.domain.model.JobApplication
 import com.example.localization.AppStrings
+import com.example.domain.usecase.AnalyzeResumeMatchUseCase
 import com.example.domain.usecase.GenerateCoverLetterUseCase
 import com.example.domain.usecase.GenerateFollowUpEmailUseCase
 import com.example.domain.usecase.GetJobByIdUseCase
@@ -34,6 +37,8 @@ class AiToolsViewModel(
     private val generateCoverLetterUseCase: GenerateCoverLetterUseCase,
     private val generateFollowUpEmailUseCase: GenerateFollowUpEmailUseCase,
     private val saveJobApplicationUseCase: SaveJobApplicationUseCase,
+    private val analyzeResumeMatchUseCase: AnalyzeResumeMatchUseCase? = null,
+    private val initialTool: AiToolType? = null,
     private val apiKeyStore: ApiKeyStore? = null,
     proxyAvailable: Boolean = false
 ) : ViewModel() {
@@ -49,6 +54,30 @@ class AiToolsViewModel(
         // Without a saved application the user only types free text, so tell the model to take the names from it.
         const val COMPANY_FROM_DETAILS = "the company named in the details below"
         const val ROLE_FROM_DETAILS = "the role named in the details below"
+        const val STATUS_CHECK_IN = "Application Status Check-In"
+    }
+
+    /** Plain-text version of a match result, used for the copy button. */
+    private fun formatMatch(result: MatchAnalysisResult): String {
+        val strings = AppStrings.current()
+        return buildString {
+            appendLine("${strings.matchScoreLabel}: ${result.matchPercent}%")
+            if (result.strengths.isNotEmpty()) {
+                appendLine()
+                appendLine(strings.matchStrengthsHeader)
+                result.strengths.forEach { appendLine("• $it") }
+            }
+            if (result.missingKeywords.isNotEmpty()) {
+                appendLine()
+                appendLine(strings.matchMissingHeader)
+                appendLine(result.missingKeywords.joinToString(", "))
+            }
+            if (result.tip.isNotBlank()) {
+                appendLine()
+                appendLine(strings.matchTipHeader)
+                appendLine(result.tip)
+            }
+        }.trim()
     }
 
     init {
@@ -58,10 +87,15 @@ class AiToolsViewModel(
                 if (job != null) {
                     activeJob = job
                     _uiState.update {
-                        it.copy(
-                            currentTool = AiToolType.CoverLetter,
-                            rawJobInput = "${job.jobTitle} at ${job.companyName}\n${job.notes}"
-                        )
+                        if (initialTool == AiToolType.FollowUpEmail) {
+                            // Opened from a stale card: go straight to a status check-in for that job.
+                            it.copy(currentTool = AiToolType.FollowUpEmail, selectedEmailType = STATUS_CHECK_IN)
+                        } else {
+                            it.copy(
+                                currentTool = AiToolType.CoverLetter,
+                                rawJobInput = "${job.jobTitle} at ${job.companyName}\n${job.notes}"
+                            )
+                        }
                     }
                 }
             }
@@ -76,6 +110,7 @@ class AiToolsViewModel(
                         currentTool = event.tool,
                         generatedOutput = "",
                         parsedJobResult = null,
+                        matchResult = null,
                         errorMessage = null
                     )
                 }
@@ -114,7 +149,7 @@ class AiToolsViewModel(
                 executeGeneration()
             }
             AiToolsUiEvent.OnClearOutput -> {
-                _uiState.update { it.copy(generatedOutput = "", parsedJobResult = null, errorMessage = null, successMessage = null) }
+                _uiState.update { it.copy(generatedOutput = "", parsedJobResult = null, matchResult = null, errorMessage = null, successMessage = null) }
             }
             AiToolsUiEvent.OnResetState -> {
                 resetState()
@@ -136,6 +171,7 @@ class AiToolsViewModel(
                 selectedEmailType = "Post-Interview Thank You",
                 generatedOutput = "",
                 parsedJobResult = null,
+                matchResult = null,
                 isLoading = false,
                 errorMessage = null,
                 successMessage = null,
@@ -143,6 +179,20 @@ class AiToolsViewModel(
                 proxyAvailable = it.proxyAvailable,
                 showKeyEntry = it.showKeyEntry
             )
+        }
+    }
+
+    /** Shows a message only when it was written for the user; anything else becomes the plain fallback. */
+    private fun userMessage(err: Throwable, fallback: String): String =
+        if (err is AiUserMessageException) err.message ?: fallback else fallback
+
+    /** A drafted follow-up restarts the "no update" clock on the job card. */
+    private fun markFollowUpDrafted() {
+        val jobId = activeJob?.id?.takeIf { it > 0 } ?: return
+        viewModelScope.launch {
+            // Re-read so edits made since the sheet opened are not overwritten.
+            val latest = getJobByIdUseCase.getDirect(jobId) ?: return@launch
+            saveJobApplicationUseCase(latest.copy(lastFollowUpAt = System.currentTimeMillis()))
         }
     }
 
@@ -176,7 +226,7 @@ class AiToolsViewModel(
                         },
                         onFailure = { err ->
                             _uiState.update {
-                                it.copy(isLoading = false, errorMessage = err.message ?: AppStrings.current().aiParseFailed, showKeyEntry = it.showKeyEntry || err is SharedLimitException)
+                                it.copy(isLoading = false, errorMessage = userMessage(err, AppStrings.current().aiParseFailed), showKeyEntry = it.showKeyEntry || err is SharedLimitException)
                             }
                         }
                     )
@@ -201,7 +251,7 @@ class AiToolsViewModel(
                         },
                         onFailure = { err ->
                             _uiState.update {
-                                it.copy(isLoading = false, errorMessage = err.message ?: AppStrings.current().aiCoverFailed, showKeyEntry = it.showKeyEntry || err is SharedLimitException)
+                                it.copy(isLoading = false, errorMessage = userMessage(err, AppStrings.current().aiCoverFailed), showKeyEntry = it.showKeyEntry || err is SharedLimitException)
                             }
                         }
                     )
@@ -224,10 +274,32 @@ class AiToolsViewModel(
                             _uiState.update {
                                 it.copy(isLoading = false, generatedOutput = stripMarkdown(email))
                             }
+                            markFollowUpDrafted()
                         },
                         onFailure = { err ->
                             _uiState.update {
-                                it.copy(isLoading = false, errorMessage = err.message ?: AppStrings.current().aiEmailFailed, showKeyEntry = it.showKeyEntry || err is SharedLimitException)
+                                it.copy(isLoading = false, errorMessage = userMessage(err, AppStrings.current().aiEmailFailed), showKeyEntry = it.showKeyEntry || err is SharedLimitException)
+                            }
+                        }
+                    )
+                }
+
+                AiToolType.MatchAnalysis -> {
+                    if (state.rawJobInput.isBlank() || state.candidateProfileInput.isBlank()) {
+                        _uiState.update { it.copy(isLoading = false, errorMessage = AppStrings.current().matchNeedBoth) }
+                        return@launch
+                    }
+                    val result = analyzeResumeMatchUseCase?.invoke(state.rawJobInput, state.candidateProfileInput)
+                        ?: Result.failure(IllegalStateException("match use case not available"))
+                    result.fold(
+                        onSuccess = { match ->
+                            _uiState.update {
+                                it.copy(isLoading = false, matchResult = match, generatedOutput = formatMatch(match))
+                            }
+                        },
+                        onFailure = { err ->
+                            _uiState.update {
+                                it.copy(isLoading = false, errorMessage = userMessage(err, AppStrings.current().aiMatchFailed), showKeyEntry = it.showKeyEntry || err is SharedLimitException)
                             }
                         }
                     )

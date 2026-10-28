@@ -19,7 +19,7 @@ object JobExportHelper {
     fun generateCsv(applications: List<JobApplication>): String {
         val sb = StringBuilder()
         // CSV Header
-        sb.append("ID,Company,Job Title,Status,Date Applied,Salary,Interview Date,Interview Type,Recruiter Name,Recruiter Email,Recruiter Phone,Referral Source,Notes,Interview Notes\n")
+        sb.append("ID,Company,Job Title,Status,Date Applied,Salary,Interview Date,Interview Type,Recruiter Name,Recruiter Email,Recruiter Phone,Referral Source,Notes,Interview Notes,Work Model,Total Compensation\n")
 
         for (job in applications) {
             sb.append(escapeCsv(job.id.toString())).append(",")
@@ -35,7 +35,9 @@ object JobExportHelper {
             sb.append(escapeCsv(job.recruiterPhone)).append(",")
             sb.append(escapeCsv(job.referralSource)).append(",")
             sb.append(escapeCsv(job.notes)).append(",")
-            sb.append(escapeCsv(job.interviewNotes))
+            sb.append(escapeCsv(job.interviewNotes)).append(",")
+            sb.append(escapeCsv(job.workModel)).append(",")
+            sb.append(escapeCsv(job.offerTotalComp))
             sb.append("\n")
         }
         return sb.toString()
@@ -79,6 +81,16 @@ object JobExportHelper {
             item.put("referralSource", job.referralSource)
             item.put("notes", job.notes)
             item.put("createdAt", job.createdAt)
+            item.put("workModel", job.workModel)
+            item.put("offerTotalComp", job.offerTotalComp)
+            item.put("offerBenefits", job.offerBenefits)
+            item.put("offerPros", job.offerPros)
+            item.put("offerCons", job.offerCons)
+            item.put("prepQuestions", job.prepQuestions)
+            item.put("prepStar", job.prepStar)
+            item.put("prepNegotiation", job.prepNegotiation)
+            item.put("interviewingAt", job.interviewingAt)
+            item.put("lastFollowUpAt", job.lastFollowUpAt)
             jsonArray.put(item)
         }
         root.put("applications", jsonArray)

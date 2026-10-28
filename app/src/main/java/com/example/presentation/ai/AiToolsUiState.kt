@@ -1,11 +1,13 @@
 package com.example.presentation.ai
 
+import com.example.data.remote.MatchAnalysisResult
 import com.example.data.remote.ParsedJobData
 
 sealed interface AiToolType {
     data object AutoParseJob : AiToolType
     data object CoverLetter : AiToolType
     data object FollowUpEmail : AiToolType
+    data object MatchAnalysis : AiToolType
 }
 
 data class AiToolsUiState(
@@ -15,6 +17,7 @@ data class AiToolsUiState(
     val selectedEmailType: String = "Post-Interview Thank You",
     val generatedOutput: String = "",
     val parsedJobResult: ParsedJobData? = null,
+    val matchResult: MatchAnalysisResult? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null,

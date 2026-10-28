@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
@@ -57,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import com.example.di.AppContainer
 import com.example.domain.model.JobApplication
 import com.example.localization.LocalAppStrings
+import com.example.util.FeedbackHelper
 import com.example.util.JobExportHelper
 import com.example.util.LocalAutoBackupManager
 
@@ -327,6 +329,31 @@ fun ExportBackupBottomSheet(
                     val success = JobExportHelper.copyToClipboard(context, summary, "Job Applications Summary")
                     if (success) {
                         Toast.makeText(context, strings.toastSummaryCopied, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
+
+            HorizontalDivider(
+                thickness = 2.dp,
+                color = MaterialTheme.colorScheme.outline
+            )
+
+            RetroSectionHeader(
+                title = strings.feedbackSection,
+                number = "03",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Option 4: Tester feedback by email, with device details attached
+            ExportOptionCard(
+                title = strings.feedbackTitle,
+                subtitle = strings.feedbackSubtitle,
+                icon = Icons.Default.Feedback,
+                actionText = strings.feedbackTitle,
+                testTag = "send_feedback_card",
+                onClick = {
+                    if (!FeedbackHelper.send(context)) {
+                        Toast.makeText(context, strings.feedbackNoEmailApp, Toast.LENGTH_SHORT).show()
                     }
                 }
             )

@@ -68,7 +68,7 @@ test("unknown tool and raw prompts are refused", async () => {
 
 test("oversized body refused", async () => {
   mockGemini(() => ok("x"));
-  const res = await worker.fetch(post({ tool: "parse", fields: { rawText: "a".repeat(30_000) } }), env());
+  const res = await worker.fetch(post({ tool: "parse", fields: { rawText: "a".repeat(40_000) } }), env());
   assert.equal(res.status, 413);
 });
 
@@ -148,4 +148,25 @@ test("lite model is tried first", async () => {
 test("not configured without secret", async () => {
   const res = await worker.fetch(post({ tool: "parse", fields: { rawText: "x" } }), env({ GEMINI_API_KEY: "" }));
   assert.equal(res.status, 503);
+});
+
+test("match tool builds a prompt from job description and resume", async () => {
+  const calls = mockGemini(() => ok("{}"));
+  const res = await worker.fetch(
+    post({ tool: "match", fields: { rawText: "Needs Kotlin and Compose", resume: "5 years Android" } }),
+    env(),
+  );
+  assert.equal(res.status, 200);
+  const prompt = JSON.parse(calls[0].init.body).contents[0].parts[0].text;
+  assert.ok(prompt.includes("Needs Kotlin and Compose"));
+  assert.ok(prompt.includes("5 years Android"));
+  assert.ok(prompt.includes("matchPercent"));
+});
+
+test("match tool needs both fields", async () => {
+  const calls = mockGemini(() => ok("x"));
+  const res = await worker.fetch(post({ tool: "match", fields: { rawText: "Only a job description" } }), env());
+  assert.equal(res.status, 400);
+  assert.equal((await res.json()).error.code, "bad_fields");
+  assert.equal(calls.length, 0);
 });

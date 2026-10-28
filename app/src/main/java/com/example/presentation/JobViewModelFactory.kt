@@ -3,13 +3,15 @@ package com.example.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.di.AppContainer
+import com.example.presentation.ai.AiToolType
 import com.example.presentation.ai.AiToolsViewModel
 import com.example.presentation.dashboard.DashboardViewModel
 import com.example.presentation.detail.AddEditJobViewModel
 
 class JobViewModelFactory(
     private val appContainer: AppContainer,
-    private val jobId: Long = 0L
+    private val jobId: Long = 0L,
+    private val initialAiTool: AiToolType? = null
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -41,6 +43,8 @@ class JobViewModelFactory(
                     generateCoverLetterUseCase = appContainer.generateCoverLetterUseCase,
                     generateFollowUpEmailUseCase = appContainer.generateFollowUpEmailUseCase,
                     saveJobApplicationUseCase = appContainer.saveJobApplicationUseCase,
+                    analyzeResumeMatchUseCase = appContainer.analyzeResumeMatchUseCase,
+                    initialTool = initialAiTool,
                     apiKeyStore = appContainer.apiKeyStore,
                     proxyAvailable = appContainer.aiProxyAvailable
                 ) as T

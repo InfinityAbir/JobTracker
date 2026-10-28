@@ -1068,6 +1068,24 @@ fun AddEditJobScreen(
             }
             }
 
+            // Section: Offer details (Offer status only) - feeds the side-by-side offer comparison
+            AnimatedVisibility(
+                visible = state.status == JobStatus.OFFER,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                OfferDetailsSection(state = state, onEvent = onEvent)
+            }
+
+            // Section: Interview prep (kept through the Offer stage for negotiation notes)
+            AnimatedVisibility(
+                visible = state.status == JobStatus.INTERVIEWING || state.status == JobStatus.OFFER,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                InterviewPrepSection(state = state, onEvent = onEvent)
+            }
+
             // Section: Recruiter & Referral Contact
             RetroPanel(
                 modifier = Modifier
@@ -1238,10 +1256,11 @@ fun AddEditJobScreen(
 }
 
 @Composable
-private fun DateQuickChip(
+internal fun DateQuickChip(
     label: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(2.dp)
@@ -1250,7 +1269,7 @@ private fun DateQuickChip(
     val border = if (isSelected) colors.outline else colors.outlineVariant
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .clip(shape)
             .background(background)
             .border(1.dp, border, shape)

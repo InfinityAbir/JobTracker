@@ -20,6 +20,14 @@ data class AddEditJobUiState(
     val interviewNotes: String = "",
     val reminderSet: Boolean = false,
     val reminderMinutesBefore: Int = 15,
+    val workModel: String = "",
+    val offerTotalComp: String = "",
+    val offerBenefits: String = "",
+    val offerPros: String = "",
+    val offerCons: String = "",
+    val prepQuestions: String = "",
+    val prepStar: String = "",
+    val prepNegotiation: String = "",
     val companyNameError: String? = null,
     val jobTitleError: String? = null,
     val isSaving: Boolean = false,
@@ -49,6 +57,14 @@ sealed interface AddEditJobUiEvent {
     data class OnInterviewNotesChange(val notes: String) : AddEditJobUiEvent
     data class OnReminderToggle(val enabled: Boolean) : AddEditJobUiEvent
     data class OnReminderMinutesChange(val minutes: Int) : AddEditJobUiEvent
+    data class OnWorkModelChange(val model: String) : AddEditJobUiEvent
+    data class OnOfferTotalCompChange(val value: String) : AddEditJobUiEvent
+    data class OnOfferBenefitToggle(val key: String) : AddEditJobUiEvent
+    data class OnOfferProsChange(val value: String) : AddEditJobUiEvent
+    data class OnOfferConsChange(val value: String) : AddEditJobUiEvent
+    data class OnPrepQuestionsChange(val value: String) : AddEditJobUiEvent
+    data class OnPrepStarChange(val value: String) : AddEditJobUiEvent
+    data class OnPrepNegotiationChange(val value: String) : AddEditJobUiEvent
     data object OnTestNotificationClick : AddEditJobUiEvent
     data object OnSaveClick : AddEditJobUiEvent
     data object OnDeleteClick : AddEditJobUiEvent

@@ -23,7 +23,17 @@ fun JobApplicationEntity.toDomain(): JobApplication {
         interviewNotes = interviewNotes,
         reminderSet = reminderSet,
         reminderMinutesBefore = reminderMinutesBefore,
-        createdAt = createdAt
+        createdAt = createdAt,
+        workModel = workModel,
+        offerTotalComp = offerTotalComp,
+        offerBenefits = offerBenefits,
+        offerPros = offerPros,
+        offerCons = offerCons,
+        prepQuestions = prepQuestions,
+        prepStar = prepStar,
+        prepNegotiation = prepNegotiation,
+        interviewingAt = interviewingAt,
+        lastFollowUpAt = lastFollowUpAt
     )
 }
 
@@ -46,6 +56,16 @@ fun JobApplication.toEntity(): JobApplicationEntity {
         interviewNotes = interviewNotes,
         reminderSet = reminderSet,
         reminderMinutesBefore = reminderMinutesBefore,
-        createdAt = createdAt
+        createdAt = createdAt,
+        workModel = workModel,
+        offerTotalComp = offerTotalComp,
+        offerBenefits = offerBenefits,
+        offerPros = offerPros,
+        offerCons = offerCons,
+        prepQuestions = prepQuestions,
+        prepStar = prepStar,
+        prepNegotiation = prepNegotiation,
+        interviewingAt = interviewingAt,
+        lastFollowUpAt = lastFollowUpAt
     )
 }

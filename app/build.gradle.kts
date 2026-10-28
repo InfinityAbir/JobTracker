@@ -20,6 +20,10 @@ android {
     val aiProxyUrl = (project.findProperty("aiProxyUrl") as String?)?.trim().orEmpty()
     buildConfigField("String", "AI_PROXY_URL", "\"$aiProxyUrl\"")
 
+    // Where the in-app "Send Tester Feedback" button sends mail. Empty = the user's mail app opens without a recipient.
+    val feedbackEmail = (project.findProperty("feedbackEmail") as String?)?.trim().orEmpty()
+    buildConfigField("String", "FEEDBACK_EMAIL", "\"$feedbackEmail\"")
+
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
@@ -59,7 +63,11 @@ android {
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = if (hasReleaseKeystore) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
     }
-    debug { signingConfig = if (debugKeystore.exists()) signingConfigs.getByName("debugConfig") else signingConfigs.getByName("debug") }
+    debug {
+      signingConfig = if (debugKeystore.exists()) signingConfigs.getByName("debugConfig") else signingConfigs.getByName("debug")
+      // Optional: -PdebugAppIdSuffix=.vt installs the debug build next to the Play build instead of replacing it.
+      (project.findProperty("debugAppIdSuffix") as String?)?.takeIf { it.isNotBlank() }?.let { applicationIdSuffix = it }
+    }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11

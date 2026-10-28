@@ -1,6 +1,7 @@
 package com.example.domain.usecase
 
 import com.example.data.remote.GeminiService
+import com.example.data.remote.MatchAnalysisResult
 import com.example.data.remote.ParsedJobData
 import com.example.domain.model.JobApplication
 
@@ -41,5 +42,14 @@ class GenerateFollowUpEmailUseCase(private val geminiService: GeminiService) {
             return Result.failure(IllegalArgumentException("Company name and Job title are required"))
         }
         return geminiService.generateFollowUpEmail(application, emailType)
+    }
+}
+
+class AnalyzeResumeMatchUseCase(private val geminiService: GeminiService) {
+    suspend operator fun invoke(jobDescription: String, resumeSummary: String): Result<MatchAnalysisResult> {
+        if (jobDescription.isBlank() || resumeSummary.isBlank()) {
+            return Result.failure(IllegalArgumentException("Job description and resume summary are required"))
+        }
+        return geminiService.analyzeMatch(jobDescription, resumeSummary)
     }
 }

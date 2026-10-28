@@ -97,4 +97,75 @@ class GeminiServiceRoutingTest {
         assertTrue(result.isFailure)
         assertTrue(seen.isEmpty())
     }
+
+    // ---- Users must never see status codes, error codes or raw API text ----
+
+    private fun assertFriendly(message: String?) {
+        assertTrue("message was: $message", !message.isNullOrBlank())
+        val text = message!!
+        for (raw in listOf("bad_tool", "bad_fields", "bad_json", "upstream", "not_configured", "Gemini API error", "(400)", "(500)", "(0)", "{", "}")) {
+            assertFalse("'$raw' leaked into: $text", text.contains(raw))
+        }
+    }
+
+    @Test
+    fun proxyUnknownTool_showsPlainMessage() = runBlocking {
+        val service = GeminiService(
+            proxyUrl = "https://proxy.test",
+            deviceIdProvider = { "device-1" },
+            client = client(400, """{"error":{"code":"bad_tool"}}""")
+        )
+        val result = service.analyzeMatch("job", "resume")
+
+        assertFriendly(result.exceptionOrNull()?.message)
+        assertEquals(com.example.localization.AppStrings.current().aiErrToolUnavailable, result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun proxyOtherErrors_showPlainMessage() = runBlocking {
+        for ((code, reason) in listOf(400 to "bad_fields", 400 to "bad_json", 500 to "not_configured", 503 to "not_configured", 418 to "weird")) {
+            val service = GeminiService(
+                proxyUrl = "https://proxy.test",
+                deviceIdProvider = { "device-1" },
+                client = client(code, """{"error":{"code":"$reason"}}""")
+            )
+            val result = service.parseJobPosting("Android dev at Acme")
+            assertFriendly(result.exceptionOrNull()?.message)
+        }
+    }
+
+    @Test
+    fun proxyGarbageBody_showsPlainMessage() = runBlocking {
+        val service = GeminiService(
+            proxyUrl = "https://proxy.test",
+            deviceIdProvider = { "device-1" },
+            client = client(200, "<html>not json</html>")
+        )
+        val result = service.generateCoverLetter("Acme", "Dev", "notes")
+        assertFriendly(result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun ownKeyRejected_showsPlainMessageWithoutCodeOrApiText() = runBlocking {
+        val service = GeminiService(
+            apiKeyProvider = { "bad-key" },
+            client = client(400, """{"error":{"code":400,"message":"API key not valid. Please pass a valid API key.","status":"INVALID_ARGUMENT"}}""")
+        )
+        val result = service.generateCoverLetter("Acme", "Dev", "notes")
+
+        assertFriendly(result.exceptionOrNull()?.message)
+        assertFalse(result.exceptionOrNull()!!.message!!.contains("INVALID_ARGUMENT"))
+        assertEquals(com.example.localization.AppStrings.current().aiErrKeyRejected, result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun ownKeyServerError_showsPlainMessage() = runBlocking {
+        val service = GeminiService(
+            apiKeyProvider = { "key" },
+            client = client(418, """{"error":{"message":"I am a teapot"}}""")
+        )
+        val result = service.generateCoverLetter("Acme", "Dev", "notes")
+        assertFriendly(result.exceptionOrNull()?.message)
+        assertFalse(result.exceptionOrNull()!!.message!!.contains("teapot"))
+    }
 }

@@ -26,6 +26,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.CircularProgressIndicator
@@ -62,7 +64,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.di.AppContainer
+import com.example.domain.analytics.StaleApplications
 import com.example.domain.model.JobApplication
+import com.example.domain.model.JobStatus
 import com.example.localization.LocalAppStrings
 import com.example.presentation.components.LanguageToggleButton
 import com.example.presentation.components.RetroButton
@@ -77,6 +81,8 @@ import com.example.presentation.dashboard.components.JobCard
 import com.example.presentation.dashboard.components.StatusSummarySection
 import com.example.presentation.dashboard.components.UpcomingInterviewsSection
 import com.example.presentation.export.ExportBackupBottomSheet
+import com.example.presentation.insights.InsightsBottomSheet
+import com.example.presentation.offers.OfferComparisonBottomSheet
 import com.example.util.AppLanguage
 import kotlinx.coroutines.launch
 
@@ -91,12 +97,17 @@ fun DashboardScreen(
     currentLanguage: AppLanguage = AppLanguage.ENGLISH,
     onLanguageChange: (AppLanguage) -> Unit = {},
     appContainer: AppContainer? = null,
+    onFollowUp: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val strings = LocalAppStrings.current
     val snackbarHostState = remember { SnackbarHostState() }
     val exportSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showExportSheet by remember { mutableStateOf(false) }
+    val insightsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showInsightsSheet by remember { mutableStateOf(false) }
+    val offersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showOffersSheet by remember { mutableStateOf(false) }
     var isPipelineExpanded by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -161,6 +172,29 @@ fun DashboardScreen(
         )
     }
 
+    val allApplications = state.rawApplications.ifEmpty { state.applications }
+    val offers = allApplications.filter { it.status == JobStatus.OFFER }
+
+    if (showInsightsSheet) {
+        InsightsBottomSheet(
+            applications = allApplications,
+            sheetState = insightsSheetState,
+            onDismiss = {
+                scope.launch { insightsSheetState.hide() }.invokeOnCompletion { showInsightsSheet = false }
+            }
+        )
+    }
+
+    if (showOffersSheet && offers.size >= 2) {
+        OfferComparisonBottomSheet(
+            offers = offers,
+            sheetState = offersSheetState,
+            onDismiss = {
+                scope.launch { offersSheetState.hide() }.invokeOnCompletion { showOffersSheet = false }
+            }
+        )
+    }
+
     Scaffold(
         modifier = modifier.testTag("dashboard_screen"),
         containerColor = Color.Transparent,
@@ -169,6 +203,7 @@ fun DashboardScreen(
                 currentLanguage = currentLanguage,
                 onLanguageChange = onLanguageChange,
                 onOpenAiTools = onOpenAiTools,
+                onOpenInsights = { showInsightsSheet = true },
                 onOpenExport = { showExportSheet = true }
             )
         },
@@ -223,6 +258,20 @@ fun DashboardScreen(
                     interviews = state.upcomingInterviews,
                     onSelectJob = onNavigateToEdit,
                     modifier = Modifier.padding(bottom = 14.dp)
+                )
+            }
+
+            if (offers.size >= 2 && !state.isDraftFilterSelected) {
+                RetroButton(
+                    text = strings.compareOffersButton(offers.size),
+                    onClick = { showOffersSheet = true },
+                    icon = Icons.Default.CompareArrows,
+                    style = RetroButtonStyle.Secondary,
+                    compact = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                        .testTag("compare_offers_button")
                 )
             }
 
@@ -287,7 +336,9 @@ fun DashboardScreen(
                             JobCard(
                                 application = application,
                                 onClick = { onNavigateToEdit(application.id) },
-                                onDelete = { onEvent(DashboardUiEvent.OnDeleteApplication(application)) }
+                                onDelete = { onEvent(DashboardUiEvent.OnDeleteApplication(application)) },
+                                staleDays = StaleApplications.daysWithoutUpdate(application),
+                                onFollowUp = { onFollowUp(application.id) }
                             )
                         }
                     }
@@ -302,6 +353,7 @@ private fun DashboardMasthead(
     currentLanguage: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
     onOpenAiTools: () -> Unit,
+    onOpenInsights: () -> Unit,
     onOpenExport: () -> Unit
 ) {
     val strings = LocalAppStrings.current
@@ -400,6 +452,17 @@ private fun DashboardMasthead(
                 onLanguageChange = onLanguageChange,
                 modifier = Modifier
                     .testTag("language_toggle_button")
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            RetroIconButton(
+                icon = Icons.Default.BarChart,
+                contentDescription = strings.insightsButtonDesc,
+                onClick = onOpenInsights,
+                backgroundColor = colors.surface,
+                size = 40.dp,
+                modifier = Modifier.testTag("dashboard_insights_button")
             )
 
             Spacer(modifier = Modifier.width(8.dp))

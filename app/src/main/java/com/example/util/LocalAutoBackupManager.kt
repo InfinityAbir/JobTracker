@@ -215,6 +215,16 @@ object LocalAutoBackupManager {
             obj.put("reminderSet", job.reminderSet)
             obj.put("reminderMinutesBefore", job.reminderMinutesBefore)
             obj.put("createdAt", job.createdAt)
+            obj.put("workModel", job.workModel)
+            obj.put("offerTotalComp", job.offerTotalComp)
+            obj.put("offerBenefits", job.offerBenefits)
+            obj.put("offerPros", job.offerPros)
+            obj.put("offerCons", job.offerCons)
+            obj.put("prepQuestions", job.prepQuestions)
+            obj.put("prepStar", job.prepStar)
+            obj.put("prepNegotiation", job.prepNegotiation)
+            obj.put("interviewingAt", job.interviewingAt)
+            obj.put("lastFollowUpAt", job.lastFollowUpAt)
             array.put(obj)
         }
         root.put("applications", array)
@@ -254,7 +264,18 @@ object LocalAutoBackupManager {
                     interviewNotes = obj.optString("interviewNotes", ""),
                     reminderSet = obj.optBoolean("reminderSet", false),
                     reminderMinutesBefore = obj.optInt("reminderMinutesBefore", 15),
-                    createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+                    createdAt = obj.optLong("createdAt", System.currentTimeMillis()),
+                    // Absent in backups made before schema v4; the defaults keep those files restorable.
+                    workModel = obj.optString("workModel", ""),
+                    offerTotalComp = obj.optString("offerTotalComp", ""),
+                    offerBenefits = obj.optString("offerBenefits", ""),
+                    offerPros = obj.optString("offerPros", ""),
+                    offerCons = obj.optString("offerCons", ""),
+                    prepQuestions = obj.optString("prepQuestions", ""),
+                    prepStar = obj.optString("prepStar", ""),
+                    prepNegotiation = obj.optString("prepNegotiation", ""),
+                    interviewingAt = obj.optLong("interviewingAt", 0L),
+                    lastFollowUpAt = obj.optLong("lastFollowUpAt", 0L)
                 )
 
                 if (app.companyName.isNotBlank() && app.jobTitle.isNotBlank()) {

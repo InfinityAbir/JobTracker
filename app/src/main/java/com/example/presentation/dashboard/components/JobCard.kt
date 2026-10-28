@@ -22,8 +22,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
@@ -44,6 +46,8 @@ import androidx.compose.ui.unit.sp
 import com.example.domain.model.JobApplication
 import com.example.domain.model.JobStatus
 import com.example.localization.LocalAppStrings
+import com.example.presentation.components.RetroButton
+import com.example.presentation.components.RetroButtonStyle
 import com.example.presentation.components.RetroDashedDivider
 import com.example.presentation.components.RetroPanel
 import com.example.presentation.components.RetroTag
@@ -56,7 +60,9 @@ fun JobCard(
     application: JobApplication,
     onClick: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    staleDays: Int? = null,
+    onFollowUp: (() -> Unit)? = null
 ) {
     val strings = LocalAppStrings.current
     val currentOnDelete by rememberUpdatedState(onDelete)
@@ -110,7 +116,9 @@ fun JobCard(
             JobCardContent(
                 application = application,
                 onClick = onClick,
-                modifier = modifier
+                modifier = modifier,
+                staleDays = staleDays,
+                onFollowUp = onFollowUp
             )
         }
     )
@@ -121,7 +129,9 @@ fun JobCard(
 private fun JobCardContent(
     application: JobApplication,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    staleDays: Int? = null,
+    onFollowUp: (() -> Unit)? = null
 ) {
     val strings = LocalAppStrings.current
     val colors = MaterialTheme.colorScheme
@@ -297,6 +307,15 @@ private fun JobCardContent(
             }
         }
 
+        if (staleDays != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            StaleNudge(
+                days = staleDays,
+                onFollowUp = onFollowUp,
+                modifier = Modifier.testTag("stale_nudge_${application.id}")
+            )
+        }
+
         if (application.notes.isNotBlank()) {
             Spacer(modifier = Modifier.height(9.dp))
             Row {
@@ -353,5 +372,51 @@ fun StatusChip(
             color = palette.ink,
             maxLines = 1
         )
+    }
+}
+
+@Composable
+private fun StaleNudge(
+    days: Int,
+    onFollowUp: (() -> Unit)?,
+    modifier: Modifier = Modifier
+) {
+    val strings = LocalAppStrings.current
+    val colors = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(3.dp)
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(colors.tertiaryContainer.copy(alpha = 0.55f))
+            .border(1.5.dp, colors.tertiary, shape)
+            .padding(start = 10.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Schedule,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = colors.onTertiaryContainer
+        )
+        Text(
+            text = strings.staleBadge(days),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = colors.onTertiaryContainer,
+            modifier = Modifier.weight(1f)
+        )
+        if (onFollowUp != null) {
+            RetroButton(
+                text = strings.staleFollowUpButton,
+                onClick = onFollowUp,
+                icon = Icons.Default.Email,
+                style = RetroButtonStyle.Secondary,
+                compact = true,
+                modifier = Modifier.testTag("stale_follow_up_button")
+            )
+        }
     }
 }

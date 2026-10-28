@@ -1,0 +1,203 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "416cece82eb95aa16f9d0fa09c278a85",
+    "entities": [
+      {
+        "tableName": "job_applications",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `companyName` TEXT NOT NULL, `jobTitle` TEXT NOT NULL, `dateApplied` TEXT NOT NULL, `status` TEXT NOT NULL, `notes` TEXT NOT NULL, `salary` TEXT NOT NULL, `recruiterName` TEXT NOT NULL, `recruiterEmail` TEXT NOT NULL, `recruiterPhone` TEXT NOT NULL, `referralSource` TEXT NOT NULL, `interviewDate` TEXT NOT NULL, `interviewTime` TEXT NOT NULL, `interviewType` TEXT NOT NULL, `interviewNotes` TEXT NOT NULL, `reminderSet` INTEGER NOT NULL, `reminderMinutesBefore` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `workModel` TEXT NOT NULL DEFAULT '', `offerTotalComp` TEXT NOT NULL DEFAULT '', `offerBenefits` TEXT NOT NULL DEFAULT '', `offerPros` TEXT NOT NULL DEFAULT '', `offerCons` TEXT NOT NULL DEFAULT '', `prepQuestions` TEXT NOT NULL DEFAULT '', `prepStar` TEXT NOT NULL DEFAULT '', `prepNegotiation` TEXT NOT NULL DEFAULT '', `interviewingAt` INTEGER NOT NULL DEFAULT 0, `lastFollowUpAt` INTEGER NOT NULL DEFAULT 0)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "companyName",
+            "columnName": "companyName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "jobTitle",
+            "columnName": "jobTitle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateApplied",
+            "columnName": "dateApplied",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "salary",
+            "columnName": "salary",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recruiterName",
+            "columnName": "recruiterName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recruiterEmail",
+            "columnName": "recruiterEmail",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recruiterPhone",
+            "columnName": "recruiterPhone",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "referralSource",
+            "columnName": "referralSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interviewDate",
+            "columnName": "interviewDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interviewTime",
+            "columnName": "interviewTime",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interviewType",
+            "columnName": "interviewType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interviewNotes",
+            "columnName": "interviewNotes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reminderSet",
+            "columnName": "reminderSet",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reminderMinutesBefore",
+            "columnName": "reminderMinutesBefore",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "workModel",
+            "columnName": "workModel",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "offerTotalComp",
+            "columnName": "offerTotalComp",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "offerBenefits",
+            "columnName": "offerBenefits",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "offerPros",
+            "columnName": "offerPros",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "offerCons",
+            "columnName": "offerCons",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "prepQuestions",
+            "columnName": "prepQuestions",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "prepStar",
+            "columnName": "prepStar",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "prepNegotiation",
+            "columnName": "prepNegotiation",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "interviewingAt",
+            "columnName": "interviewingAt",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "lastFollowUpAt",
+            "columnName": "lastFollowUpAt",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '416cece82eb95aa16f9d0fa09c278a85')"
+    ]
+  }
+}

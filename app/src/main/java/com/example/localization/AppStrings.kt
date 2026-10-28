@@ -8,6 +8,10 @@ import com.example.util.LanguageManager
 
 val LocalAppStrings = compositionLocalOf<AppStrings> { AppStrings.English }
 
+/** 6.0 -> "6", 6.5 -> "6.5" */
+internal fun trimDays(days: Double): String =
+    if (days % 1.0 == 0.0) days.toLong().toString() else days.toString()
+
 sealed class AppStrings {
     // App & Header
     abstract val appName: String
@@ -195,11 +199,13 @@ sealed class AppStrings {
     abstract val aiErrEmpty: String
     abstract val aiErrSharedLimit: String
     abstract val aiErrBusy: String
+    abstract val aiErrToolUnavailable: String
     abstract val apiKeyTitleOptional: String
     abstract val apiKeyExplainerOptional: String
     abstract val useOwnKey: String
-    abstract fun aiErrKeyRejected(code: Int): String
-    abstract fun aiErrGeneric(code: Int, message: String): String
+    abstract val aiErrKeyRejected: String
+    abstract val aiErrGeneric: String
+    abstract val aiErrTooLong: String
 
     // Messages & toasts
     abstract val msgDraftDiscarded: String
@@ -253,6 +259,89 @@ sealed class AppStrings {
     abstract val actionShareCsv: String
     abstract val actionShareJson: String
     abstract val closeDesc: String
+
+    // Pipeline insights
+    abstract val insightsTitle: String
+    abstract val insightsSubtitle: String
+    abstract val insightsButtonDesc: String
+    abstract val insightsEmpty: String
+    abstract val insightsVelocity: String
+    abstract val insightsLast7: String
+    abstract val insightsLast30: String
+    abstract val insightsConversion: String
+    abstract val insightsInterviewRate: String
+    abstract val insightsResponseRate: String
+    abstract val insightsOfferRate: String
+    abstract val insightsResponseTime: String
+    abstract val insightsAvgDaysLabel: String
+    abstract fun insightsAvgDays(days: Double): String
+    abstract fun insightsAvgDaysBasedOn(count: Int): String
+    abstract val insightsNoTimingData: String
+    abstract val insightsSources: String
+    abstract fun insightsSourceDetail(applications: Int, interviews: Int): String
+    abstract val insightsFootnote: String
+    abstract val sourceNotSet: String
+    abstract fun getReferralSourceName(source: String): String
+
+    // Stale applications
+    abstract fun staleBadge(days: Int): String
+    abstract val staleFollowUpButton: String
+
+    // Offer comparison
+    abstract fun compareOffersButton(count: Int): String
+    abstract val compareOffersTitle: String
+    abstract val compareOffersSubtitle: String
+    abstract val compareSelectHint: String
+    abstract val compareRowBaseSalary: String
+    abstract val compareRowTotalComp: String
+    abstract val compareRowWorkModel: String
+    abstract val compareRowBenefits: String
+    abstract val compareRowPros: String
+    abstract val compareRowCons: String
+    abstract val offerDetailsSection: String
+    abstract val workModelLabel: String
+    abstract fun getWorkModelName(key: String): String
+    abstract val offerTotalCompLabel: String
+    abstract val offerTotalCompPlaceholder: String
+    abstract val offerBenefitsLabel: String
+    abstract fun getBenefitName(key: String): String
+    abstract val offerProsLabel: String
+    abstract val offerProsPlaceholder: String
+    abstract val offerConsLabel: String
+    abstract val offerConsPlaceholder: String
+
+    // Interview prep
+    abstract val prepSection: String
+    abstract val prepQuestionsLabel: String
+    abstract val prepQuestionsPlaceholder: String
+    abstract val prepStarLabel: String
+    abstract val prepStarPlaceholder: String
+    abstract val prepStarTemplateChip: String
+    abstract val prepStarTemplate: String
+    abstract val prepNegotiationLabel: String
+    abstract val prepNegotiationPlaceholder: String
+
+    // Resume match analysis
+    abstract val tabMatch: String
+    abstract val matchExplainer: String
+    abstract val matchJobLabel: String
+    abstract val matchJobPlaceholder: String
+    abstract val matchResumeLabel: String
+    abstract val matchResumePlaceholder: String
+    abstract val btnAnalyzeMatch: String
+    abstract val matchScoreLabel: String
+    abstract val matchStrengthsHeader: String
+    abstract val matchMissingHeader: String
+    abstract val matchNoGaps: String
+    abstract val matchTipHeader: String
+    abstract val matchNeedBoth: String
+    abstract val aiMatchFailed: String
+
+    // Tester feedback
+    abstract val feedbackSection: String
+    abstract val feedbackTitle: String
+    abstract val feedbackSubtitle: String
+    abstract val feedbackNoEmailApp: String
 
     // Helper functions for localized enum display
     abstract fun getStatusDisplayName(status: JobStatus): String
@@ -441,11 +530,13 @@ sealed class AppStrings {
         override val aiErrEmpty = "Gemini returned an empty answer. Try again."
         override val aiErrSharedLimit = "The shared free AI limit is reached for now. Try again in a minute or later today, or add your own free Gemini key for unlimited use."
         override val aiErrBusy = "The AI service is busy right now. Please try again in a moment."
+        override val aiErrToolUnavailable = "This AI tool is not available on the shared service yet. Update the app or add your own Gemini key to use it."
         override val apiKeyTitleOptional = "Use your own Gemini key (optional)"
         override val apiKeyExplainerOptional = "AI works for free out of the box, but the free quota is shared. Add your own free key from aistudio.google.com/apikey to skip the shared limit. It is stored only on this device."
         override val useOwnKey = "Use my own key (optional)"
-        override fun aiErrKeyRejected(code: Int) = "Gemini rejected the request ($code). Check that your API key is valid."
-        override fun aiErrGeneric(code: Int, message: String) = "Gemini API error ($code): $message"
+        override val aiErrKeyRejected = "Your Gemini API key was not accepted. Check that it is correct, or remove it to use the shared AI service."
+        override val aiErrGeneric = "Something went wrong with the AI service. Please try again in a moment."
+        override val aiErrTooLong = "That text is too long for the AI service. Shorten it and try again."
 
         override val msgDraftDiscarded = "Draft application discarded"
         override fun msgApplicationDeleted(company: String) = "Application for $company deleted"
@@ -497,6 +588,84 @@ sealed class AppStrings {
         override val actionShareCsv = "Share CSV"
         override val actionShareJson = "Share JSON"
         override val closeDesc = "Close"
+
+        override val insightsTitle = "Pipeline Insights"
+        override val insightsSubtitle = "How your job search is performing"
+        override val insightsButtonDesc = "Pipeline insights"
+        override val insightsEmpty = "Log a few applications and your insights will appear here."
+        override val insightsVelocity = "APPLICATION VELOCITY"
+        override val insightsLast7 = "Last 7 days"
+        override val insightsLast30 = "Last 30 days"
+        override val insightsConversion = "CONVERSION"
+        override val insightsInterviewRate = "Interview rate"
+        override val insightsResponseRate = "Response rate"
+        override val insightsOfferRate = "Offer rate"
+        override val insightsResponseTime = "RESPONSE TIME"
+        override val insightsAvgDaysLabel = "Applied to interviewing"
+        override fun insightsAvgDays(days: Double) = if (days == 1.0) "1 day" else "${trimDays(days)} days"
+        override fun insightsAvgDaysBasedOn(count: Int) = if (count == 1) "Based on 1 application" else "Based on $count applications"
+        override val insightsNoTimingData = "Not enough data yet. This fills in as you move applications from Applied to Interviewing."
+        override val insightsSources = "TOP SOURCES"
+        override fun insightsSourceDetail(applications: Int, interviews: Int) =
+            "${if (applications == 1) "1 application" else "$applications applications"} · $interviews to interview"
+        override val insightsFootnote = "Interview rate counts every application that reached an interview, including ones rejected later."
+        override val sourceNotSet = "Not specified"
+        override fun getReferralSourceName(source: String) = if (source.isBlank()) sourceNotSet else source
+
+        override fun staleBadge(days: Int) = "No update in $days days"
+        override val staleFollowUpButton = "Send Follow-Up"
+
+        override fun compareOffersButton(count: Int) = "Compare $count offers"
+        override val compareOffersTitle = "Compare Offers"
+        override val compareOffersSubtitle = "Side by side, so the choice is clear"
+        override val compareSelectHint = "Choose up to 3 offers to compare"
+        override val compareRowBaseSalary = "Base salary"
+        override val compareRowTotalComp = "Total compensation"
+        override val compareRowWorkModel = "Work model"
+        override val compareRowBenefits = "Benefits"
+        override val compareRowPros = "Pros"
+        override val compareRowCons = "Cons"
+        override val offerDetailsSection = "Offer Details"
+        override val workModelLabel = "Work model"
+        override fun getWorkModelName(key: String) = key
+        override val offerTotalCompLabel = "Total compensation (optional)"
+        override val offerTotalCompPlaceholder = "e.g. base + bonus + equity: $190,000 / yr"
+        override val offerBenefitsLabel = "Benefits included"
+        override fun getBenefitName(key: String) = key
+        override val offerProsLabel = "Pros (one per line)"
+        override val offerProsPlaceholder = "e.g. Strong team\nClear growth path"
+        override val offerConsLabel = "Cons (one per line)"
+        override val offerConsPlaceholder = "e.g. Long commute\nOn-call rotation"
+
+        override val prepSection = "Interview Prep"
+        override val prepQuestionsLabel = "Questions to ask the interviewer"
+        override val prepQuestionsPlaceholder = "e.g. What does success look like in the first 90 days?"
+        override val prepStarLabel = "STAR answer notes"
+        override val prepStarPlaceholder = "Situation, Task, Action, Result for your best stories..."
+        override val prepStarTemplateChip = "+ STAR template"
+        override val prepStarTemplate = "Situation: \nTask: \nAction: \nResult: \n"
+        override val prepNegotiationLabel = "Salary negotiation notes"
+        override val prepNegotiationPlaceholder = "Target range, walk-away number, what else you can negotiate..."
+
+        override val tabMatch = "Match"
+        override val matchExplainer = "Paste a job description and your resume or skills summary to see how well they match, plus the keywords you are missing."
+        override val matchJobLabel = "Job Description:"
+        override val matchJobPlaceholder = "Paste the job description here..."
+        override val matchResumeLabel = "Your Resume / Skills Summary:"
+        override val matchResumePlaceholder = "Paste your resume text or a summary of your skills and experience..."
+        override val btnAnalyzeMatch = "Analyze Match"
+        override val matchScoreLabel = "Match"
+        override val matchStrengthsHeader = "Strengths to emphasize"
+        override val matchMissingHeader = "Missing keywords"
+        override val matchNoGaps = "No major gaps found."
+        override val matchTipHeader = "Tip"
+        override val matchNeedBoth = "Add both the job description and your resume or skills summary."
+        override val aiMatchFailed = "Failed to analyze the match"
+
+        override val feedbackSection = "FEEDBACK"
+        override val feedbackTitle = "Send Tester Feedback"
+        override val feedbackSubtitle = "Report a bug or suggest a feature by email. Your Android and app version are added automatically."
+        override val feedbackNoEmailApp = "No email app found on this device"
 
         override fun getStatusDisplayName(status: JobStatus): String = status.displayName
         override fun getSortDisplayName(sort: JobSortOption): String = sort.displayName
@@ -683,11 +852,13 @@ sealed class AppStrings {
         override val aiErrEmpty = "জেমিনি কোনো উত্তর দেয়নি। আবার চেষ্টা করুন।"
         override val aiErrSharedLimit = "শেয়ার্ড বিনামূল্যের এআই সীমা আপাতত শেষ। এক মিনিট বা পরে আবার চেষ্টা করুন, অথবা সীমাহীন ব্যবহারের জন্য নিজের বিনামূল্যের জেমিনি কী যুক্ত করুন।"
         override val aiErrBusy = "এআই সার্ভিস এখন ব্যস্ত। একটু পরে আবার চেষ্টা করুন।"
+        override val aiErrToolUnavailable = "এই এআই টুলটি শেয়ার্ড সার্ভিসে এখনও চালু হয়নি। অ্যাপ আপডেট করুন বা নিজের জেমিনি কী যুক্ত করে ব্যবহার করুন।"
         override val apiKeyTitleOptional = "নিজের জেমিনি কী ব্যবহার করুন (ঐচ্ছিক)"
         override val apiKeyExplainerOptional = "এআই বিনামূল্যেই কাজ করে, তবে বিনামূল্যের কোটা সবার মধ্যে ভাগ হয়। শেয়ার্ড সীমা এড়াতে aistudio.google.com/apikey থেকে নিজের বিনামূল্যের কী যুক্ত করুন। কী শুধু এই ডিভাইসে থাকে।"
         override val useOwnKey = "নিজের কী ব্যবহার করুন (ঐচ্ছিক)"
-        override fun aiErrKeyRejected(code: Int) = "জেমিনি অনুরোধ গ্রহণ করেনি ($code)। আপনার এপিআই কী সঠিক কিনা দেখুন।"
-        override fun aiErrGeneric(code: Int, message: String) = "জেমিনি এপিআই ত্রুটি ($code): $message"
+        override val aiErrKeyRejected = "আপনার জেমিনি এপিআই কী গ্রহণ করা হয়নি। কী সঠিক কিনা দেখুন, অথবা শেয়ার্ড এআই সার্ভিস ব্যবহারে কীটি মুছে ফেলুন।"
+        override val aiErrGeneric = "এআই সার্ভিসে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।"
+        override val aiErrTooLong = "লেখাটি এআই সার্ভিসের জন্য অনেক বড়। ছোট করে আবার চেষ্টা করুন।"
 
         override val msgDraftDiscarded = "খসড়া আবেদন বাতিল করা হয়েছে"
         override fun msgApplicationDeleted(company: String) = "$company এর আবেদন মুছে ফেলা হয়েছে"
@@ -741,6 +912,107 @@ sealed class AppStrings {
         override val closeDesc = "বন্ধ করুন"
         override val btnFillCurrentForm = "বর্তমান ফর্মে পূরণ করুন"
         override val btnCreateWithExtracted = "সংগৃহীত তথ্য দিয়ে আবেদন তৈরি করুন"
+
+        override val insightsTitle = "পাইপলাইন ইনসাইটস"
+        override val insightsSubtitle = "আপনার চাকরি খোঁজা কেমন চলছে"
+        override val insightsButtonDesc = "পাইপলাইন ইনসাইটস"
+        override val insightsEmpty = "কয়েকটি আবেদন যোগ করলেই এখানে ইনসাইটস দেখা যাবে।"
+        override val insightsVelocity = "আবেদনের গতি"
+        override val insightsLast7 = "গত ৭ দিন"
+        override val insightsLast30 = "গত ৩০ দিন"
+        override val insightsConversion = "সাফল্যের হার"
+        override val insightsInterviewRate = "ইন্টারভিউ হার"
+        override val insightsResponseRate = "সাড়া পাওয়ার হার"
+        override val insightsOfferRate = "অফার হার"
+        override val insightsResponseTime = "সাড়া পাওয়ার সময়"
+        override val insightsAvgDaysLabel = "আবেদন থেকে ইন্টারভিউ"
+        override fun insightsAvgDays(days: Double) = "${trimDays(days)} দিন"
+        override fun insightsAvgDaysBasedOn(count: Int) = "$count টি আবেদনের ভিত্তিতে"
+        override val insightsNoTimingData = "এখনও যথেষ্ট তথ্য নেই। আবেদন \"আবেদনকৃত\" থেকে \"ইন্টারভিউ\"-তে নিলে এটি পূর্ণ হবে।"
+        override val insightsSources = "সেরা উৎস"
+        override fun insightsSourceDetail(applications: Int, interviews: Int) =
+            "$applications টি আবেদন · $interviews টি ইন্টারভিউ"
+        override val insightsFootnote = "ইন্টারভিউ হারে পরে বাতিল হওয়া আবেদনসহ ইন্টারভিউ পর্যন্ত পৌঁছানো সব আবেদন ধরা হয়।"
+        override val sourceNotSet = "উল্লেখ নেই"
+        override fun getReferralSourceName(source: String) = when (source) {
+            "" -> sourceNotSet
+            "LinkedIn" -> "লিঙ্কডইন"
+            "Employee Referral" -> "রেফারেল"
+            "Company Website" -> "কোম্পানির ওয়েবসাইট"
+            "Recruiter Outreach" -> "রিক্রুটার যোগাযোগ"
+            "Job Board" -> "জব পোর্টাল"
+            "Other" -> "অন্যান্য"
+            else -> source
+        }
+
+        override fun staleBadge(days: Int) = "$days দিন ধরে কোনো আপডেট নেই"
+        override val staleFollowUpButton = "ফলো-আপ পাঠান"
+
+        override fun compareOffersButton(count: Int) = "$count টি অফার তুলনা করুন"
+        override val compareOffersTitle = "অফার তুলনা"
+        override val compareOffersSubtitle = "পাশাপাশি দেখে সহজে সিদ্ধান্ত নিন"
+        override val compareSelectHint = "তুলনার জন্য সর্বোচ্চ ৩টি অফার বাছুন"
+        override val compareRowBaseSalary = "মূল বেতন"
+        override val compareRowTotalComp = "মোট পারিশ্রমিক"
+        override val compareRowWorkModel = "কাজের ধরন"
+        override val compareRowBenefits = "সুবিধা"
+        override val compareRowPros = "ভালো দিক"
+        override val compareRowCons = "খারাপ দিক"
+        override val offerDetailsSection = "অফারের বিবরণ"
+        override val workModelLabel = "কাজের ধরন"
+        override fun getWorkModelName(key: String) = when (key) {
+            "Remote" -> "রিমোট"
+            "Hybrid" -> "হাইব্রিড"
+            "Onsite" -> "অফিসে"
+            else -> key
+        }
+        override val offerTotalCompLabel = "মোট পারিশ্রমিক (ঐচ্ছিক)"
+        override val offerTotalCompPlaceholder = "যেমন: বেতন + বোনাস + ইক্যুইটি: ২০ লাখ টাকা / বছর"
+        override val offerBenefitsLabel = "অন্তর্ভুক্ত সুবিধা"
+        override fun getBenefitName(key: String) = when (key) {
+            "Health insurance" -> "স্বাস্থ্য বিমা"
+            "Equity / stock" -> "ইক্যুইটি / স্টক"
+            "Retirement / provident fund" -> "প্রভিডেন্ট ফান্ড"
+            "Annual bonus" -> "বার্ষিক বোনাস"
+            "Generous paid leave" -> "বেশি ছুটি"
+            "Learning budget" -> "শেখার বাজেট"
+            "Flexible hours" -> "নমনীয় সময়"
+            else -> key
+        }
+        override val offerProsLabel = "ভালো দিক (প্রতি লাইনে একটি)"
+        override val offerProsPlaceholder = "যেমন: চমৎকার টিম\nউন্নতির স্পষ্ট সুযোগ"
+        override val offerConsLabel = "খারাপ দিক (প্রতি লাইনে একটি)"
+        override val offerConsPlaceholder = "যেমন: যাতায়াত দীর্ঘ\nঅন-কল ডিউটি"
+
+        override val prepSection = "ইন্টারভিউ প্রস্তুতি"
+        override val prepQuestionsLabel = "ইন্টারভিউয়ারকে করার প্রশ্ন"
+        override val prepQuestionsPlaceholder = "যেমন: প্রথম ৯০ দিনে সফলতা বলতে কী বোঝায়?"
+        override val prepStarLabel = "STAR পদ্ধতির উত্তরের নোট"
+        override val prepStarPlaceholder = "আপনার সেরা অভিজ্ঞতাগুলোর পরিস্থিতি, কাজ, পদক্ষেপ ও ফলাফল..."
+        override val prepStarTemplateChip = "+ STAR টেমপ্লেট"
+        override val prepStarTemplate = "পরিস্থিতি (Situation): \nকাজ (Task): \nপদক্ষেপ (Action): \nফলাফল (Result): \n"
+        override val prepNegotiationLabel = "বেতন দরকষাকষির নোট"
+        override val prepNegotiationPlaceholder = "কাঙ্ক্ষিত পরিসর, সর্বনিম্ন সীমা, আর কী কী নিয়ে দরকষাকষি করা যায়..."
+
+        override val tabMatch = "ম্যাচ"
+        override val matchExplainer = "চাকরির বিবরণ ও আপনার রেজুমে বা দক্ষতার সারাংশ পেস্ট করে দেখুন কতটা মিলছে এবং কোন কিওয়ার্ড বাদ পড়ছে।"
+        override val matchJobLabel = "চাকরির বিবরণ:"
+        override val matchJobPlaceholder = "চাকরির বিবরণ এখানে পেস্ট করুন..."
+        override val matchResumeLabel = "আপনার রেজুমে / দক্ষতার সারাংশ:"
+        override val matchResumePlaceholder = "রেজুমের লেখা বা আপনার দক্ষতা ও অভিজ্ঞতার সারাংশ পেস্ট করুন..."
+        override val btnAnalyzeMatch = "ম্যাচ বিশ্লেষণ করুন"
+        override val matchScoreLabel = "ম্যাচ"
+        override val matchStrengthsHeader = "যে দিকগুলো তুলে ধরবেন"
+        override val matchMissingHeader = "বাদ পড়া কিওয়ার্ড"
+        override val matchNoGaps = "বড় কোনো ঘাটতি পাওয়া যায়নি।"
+        override val matchTipHeader = "পরামর্শ"
+        override val matchNeedBoth = "চাকরির বিবরণ এবং আপনার রেজুমে বা দক্ষতার সারাংশ দুটিই দিন।"
+        override val aiMatchFailed = "ম্যাচ বিশ্লেষণ করা যায়নি"
+
+        override val feedbackSection = "মতামত"
+        override val feedbackTitle = "টেস্টার ফিডব্যাক পাঠান"
+        override val feedbackSubtitle = "ইমেইলে বাগ জানান বা নতুন ফিচারের পরামর্শ দিন। আপনার অ্যান্ড্রয়েড ও অ্যাপ ভার্সন নিজে থেকেই যুক্ত হবে।"
+        override val feedbackNoEmailApp = "এই ডিভাইসে কোনো ইমেইল অ্যাপ পাওয়া যায়নি"
 
         override fun getStatusDisplayName(status: JobStatus): String = when (status) {
             JobStatus.APPLIED -> "আবেদনকৃত"
