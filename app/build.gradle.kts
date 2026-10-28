@@ -87,7 +87,9 @@ android {
 // Never ship a Play upload build signed with the debug key: Play rejects it, and a debug-signed
 // APK must not reach users. Pass -PallowDebugSignedRelease=true for local R8/smoke builds only.
 gradle.taskGraph.whenReady {
-  val releaseKeyMissing = !(file(System.getenv("KEYSTORE_PATH") ?: "E:/Keys/jobtracker-upload.jks").exists() &&
+  // Android Studio's "Generate Signed App Bundle" passes the keystore itself through this property.
+  val signedByAndroidStudio = !(project.findProperty("android.injected.signing.store.file") as String?).isNullOrBlank()
+  val releaseKeyMissing = !signedByAndroidStudio && !(file(System.getenv("KEYSTORE_PATH") ?: "E:/Keys/jobtracker-upload.jks").exists() &&
     !System.getenv("STORE_PASSWORD").isNullOrBlank() && !System.getenv("KEY_PASSWORD").isNullOrBlank())
   val buildsRelease = allTasks.any {
     it.project == project && Regex("^(assemble|bundle|package)Release$").matches(it.name)
