@@ -13,8 +13,8 @@ android {
     applicationId = "com.aistudio.jobtracker.app"
     minSdk = 24
     targetSdk = 36
-    versionCode = 2
-    versionName = "1.0.1"
+    versionCode = 3
+    versionName = "1.0.2"
 
     // Public URL of the deployed ai-proxy Worker (not a secret). Empty = shared AI disabled, own-key only.
     val aiProxyUrl = (project.findProperty("aiProxyUrl") as String?)?.trim().orEmpty()
