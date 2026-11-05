@@ -22,13 +22,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
@@ -49,6 +53,7 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -319,6 +324,8 @@ fun RetroIconButton(
 
     Box(
         modifier = modifier
+            // Keep the visual size but guarantee a 48dp touch target.
+            .minimumInteractiveComponentSize()
             .size(size)
             .hardShadow(shadow, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), shape)
             .clip(shape)
@@ -327,6 +334,7 @@ fun RetroIconButton(
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
+                role = Role.Button,
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center
@@ -501,21 +509,51 @@ fun RetroSectionHeader(
     }
 }
 
-/** The primary "stamp" FAB. */
+/** Diameter of [RetroFab]; comfortably above the 48dp minimum touch target. */
+val RetroFabSize = 58.dp
+
+/**
+ * Compact circular floating action button in the retro style: amber fill, ink outline and a
+ * hard offset shadow that flattens when pressed. [text] is the accessibility label.
+ */
 @Composable
 fun RetroFab(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector? = null
+    icon: ImageVector = Icons.Default.Add
 ) {
-    RetroButton(
-        text = text,
-        onClick = onClick,
-        modifier = modifier,
-        icon = icon,
-        style = RetroButtonStyle.Primary
+    val colors = MaterialTheme.colorScheme
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val shadow by animateDpAsState(
+        targetValue = if (pressed) 1.dp else 4.dp,
+        label = "retro_fab_shadow"
     )
+
+    Box(
+        modifier = modifier
+            .size(RetroFabSize)
+            .hardShadow(shadow, colors.outline.copy(alpha = 0.55f), CircleShape)
+            .clip(CircleShape)
+            .background(colors.primary)
+            .border(2.dp, colors.outline, CircleShape)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Button,
+                onClickLabel = text,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = text,
+            tint = colors.onPrimary,
+            modifier = Modifier.size(28.dp)
+        )
+    }
 }
 
 /** Colours for a given job status, adapted to the active theme. */

@@ -96,6 +96,7 @@ private fun LanguageKey(
 
     Box(
         modifier = Modifier
+            .defaultMinSize(minWidth = 40.dp, minHeight = 40.dp)
             .clip(RoundedCornerShape(2.dp))
             .background(background)
             .clickable(

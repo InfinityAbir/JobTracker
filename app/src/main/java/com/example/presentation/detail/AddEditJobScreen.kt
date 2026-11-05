@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -88,6 +89,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -361,7 +363,8 @@ fun AddEditJobScreen(
     }
 
     Scaffold(
-        modifier = modifier.testTag("add_edit_job_screen"),
+        // imePadding lifts the Save bar above the keyboard and lets the form scroll to the focused field.
+        modifier = modifier.imePadding().testTag("add_edit_job_screen"),
         snackbarHost = { SnackbarHost(snackbarHostState, modifier = Modifier.testTag("add_edit_snackbar_host")) },
         containerColor = Color.Transparent,
         topBar = {
@@ -371,10 +374,50 @@ fun AddEditJobScreen(
                     .background(MaterialTheme.colorScheme.surface)
                     .statusBarsPadding()
             ) {
-                Row(
+                // On narrow phones the four header controls would squeeze the title to nothing,
+                // so the action cluster drops to its own line under the title.
+                val narrowHeader = LocalConfiguration.current.screenWidthDp < 360
+                val actionCluster: @Composable () -> Unit = {
+                    LanguageToggleButton(
+                        currentLanguage = currentLanguage,
+                        onLanguageChange = onLanguageChange,
+                        modifier = Modifier
+                            .testTag("language_toggle_button")
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    RetroIconButton(
+                        icon = Icons.Default.AutoAwesome,
+                        contentDescription = strings.aiAssistantDesc,
+                        onClick = onOpenAiTools,
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        size = 42.dp,
+                        shadowOffset = 2.dp,
+                        modifier = Modifier.testTag("detail_ai_tools_button")
+                    )
+
+                    if (state.id > 0) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        RetroIconButton(
+                            icon = Icons.Default.Delete,
+                            contentDescription = strings.deleteApplicationDesc,
+                            onClick = { showDeleteDialog = true },
+                            backgroundColor = MaterialTheme.colorScheme.surface,
+                            size = 42.dp,
+                            shadowOffset = 2.dp,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.testTag("delete_job_icon_button")
+                        )
+                    }
+                }
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 8.dp),
+                        .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 8.dp)
+                ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RetroIconButton(
@@ -413,40 +456,22 @@ fun AddEditJobScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    LanguageToggleButton(
-                        currentLanguage = currentLanguage,
-                        onLanguageChange = onLanguageChange,
-                        modifier = Modifier
-                            .testTag("language_toggle_button")
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    RetroIconButton(
-                        icon = Icons.Default.AutoAwesome,
-                        contentDescription = strings.aiAssistantDesc,
-                        onClick = onOpenAiTools,
-                        backgroundColor = MaterialTheme.colorScheme.surface,
-                        size = 42.dp,
-                        shadowOffset = 2.dp,
-                        modifier = Modifier.testTag("detail_ai_tools_button")
-                    )
-
-                    if (state.id > 0) {
+                    if (!narrowHeader) {
                         Spacer(modifier = Modifier.width(8.dp))
-                        RetroIconButton(
-                            icon = Icons.Default.Delete,
-                            contentDescription = strings.deleteApplicationDesc,
-                            onClick = { showDeleteDialog = true },
-                            backgroundColor = MaterialTheme.colorScheme.surface,
-                            size = 42.dp,
-                            shadowOffset = 2.dp,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.testTag("delete_job_icon_button")
-                        )
+                        actionCluster()
                     }
+                }
+                if (narrowHeader) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        actionCluster()
+                    }
+                }
                 }
                 RetroTopBarRule()
             }

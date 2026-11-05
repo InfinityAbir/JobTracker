@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -42,7 +43,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.model.JobStatus
@@ -177,10 +181,12 @@ fun StatusSummarySection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("status_chips_flow_row"),
+                    maxItemsInEachRow = 3,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     SummaryMetricPill(
+                        modifier = Modifier.weight(1f),
                         label = strings.statusAll,
                         count = summary.total,
                         accentColor = colors.primary,
@@ -189,6 +195,7 @@ fun StatusSummarySection(
                     )
 
                     SummaryMetricPill(
+                        modifier = Modifier.weight(1f),
                         label = strings.statusDraft,
                         count = summary.drafts,
                         accentColor = retroDraftColors().ink,
@@ -197,6 +204,7 @@ fun StatusSummarySection(
                     )
 
                     SummaryMetricPill(
+                        modifier = Modifier.weight(1f),
                         label = strings.statusApplied,
                         count = summary.applied,
                         accentColor = retroStatusColors(JobStatus.APPLIED).ink,
@@ -207,6 +215,7 @@ fun StatusSummarySection(
                     )
 
                     SummaryMetricPill(
+                        modifier = Modifier.weight(1f),
                         label = strings.statusInterviewing,
                         count = summary.interviewing,
                         accentColor = retroStatusColors(JobStatus.INTERVIEWING).ink,
@@ -217,6 +226,7 @@ fun StatusSummarySection(
                     )
 
                     SummaryMetricPill(
+                        modifier = Modifier.weight(1f),
                         label = strings.statusOffer,
                         count = summary.offer,
                         accentColor = retroStatusColors(JobStatus.OFFER).ink,
@@ -227,6 +237,7 @@ fun StatusSummarySection(
                     )
 
                     SummaryMetricPill(
+                        modifier = Modifier.weight(1f),
                         label = strings.statusRejected,
                         count = summary.rejected,
                         accentColor = retroStatusColors(JobStatus.REJECTED).ink,
@@ -379,65 +390,62 @@ private fun CompactStatusItem(
     }
 }
 
+/**
+ * Filter tile: large serif counter over a mono label, with a status-colour rule on top.
+ * Selected tiles fill with the status colour. At least 64dp tall for comfortable tapping.
+ */
 @Composable
 private fun SummaryMetricPill(
     label: String,
     count: Int,
     accentColor: Color,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(2.dp)
-    val background = if (isSelected) accentColor else colors.surface
+    val shape = RoundedCornerShape(3.dp)
+    val background = if (isSelected) accentColor else colors.surfaceVariant.copy(alpha = 0.55f)
     val contentColor = if (isSelected) onAccent(accentColor) else colors.onSurface
+    val labelColor = if (isSelected) contentColor else colors.onSurfaceVariant
     val borderColor = if (isSelected) colors.outline else colors.outlineVariant
-    val shadowModifier = if (isSelected) {
-        Modifier.hardShadow(2.dp, colors.outline.copy(alpha = 0.45f), shape)
-    } else {
-        Modifier
-    }
 
-    Row(
-        modifier = Modifier
-            .then(shadowModifier)
+    Column(
+        modifier = modifier
+            .heightIn(min = 64.dp)
             .clip(shape)
             .background(background)
             .border(1.5.dp, borderColor, shape)
             .clickable(onClick = onClick)
-            .padding(horizontal = 9.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+            .semantics(mergeDescendants = true) { selected = isSelected },
+        horizontalAlignment = Alignment.Start
     ) {
-        if (!isSelected) {
-            Box(
-                modifier = Modifier
-                    .size(7.dp)
-                    .background(accentColor)
-            )
-        }
-
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = contentColor
-        )
-
         Box(
             modifier = Modifier
-                .background(
-                    if (isSelected) contentColor.copy(alpha = 0.2f)
-                    else colors.surfaceVariant,
-                    RoundedCornerShape(1.dp)
-                )
-                .padding(horizontal = 5.dp, vertical = 1.dp)
+                .fillMaxWidth()
+                .height(3.dp)
+                .background(if (isSelected) contentColor.copy(alpha = 0.35f) else accentColor)
+        )
+        Column(
+            modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             Text(
                 text = count.toString(),
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                style = MaterialTheme.typography.titleLarge,
+                color = if (isSelected) contentColor else accentColor,
+                maxLines = 1
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 9.5.sp,
+                    letterSpacing = 0.3.sp
+                ),
                 fontWeight = FontWeight.Bold,
-                color = contentColor
+                color = labelColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

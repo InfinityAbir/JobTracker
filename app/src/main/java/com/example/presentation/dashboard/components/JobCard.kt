@@ -53,6 +53,7 @@ import com.example.presentation.components.RetroPanel
 import com.example.presentation.components.RetroTag
 import com.example.presentation.components.hardShadow
 import com.example.presentation.components.retroStatusColors
+import com.example.ui.theme.RetroMono
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -194,7 +195,10 @@ private fun JobCardContent(
                 Spacer(modifier = Modifier.height(1.dp))
                 Text(
                     text = application.companyName,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontFamily = RetroMono,
+                        fontSize = 12.5.sp
+                    ),
                     color = colors.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

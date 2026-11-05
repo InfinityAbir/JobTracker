@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,6 +55,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -71,6 +75,7 @@ import com.example.localization.LocalAppStrings
 import com.example.presentation.components.LanguageToggleButton
 import com.example.presentation.components.RetroButton
 import com.example.presentation.components.RetroButtonStyle
+import com.example.presentation.components.RetroFab
 import com.example.presentation.components.RetroIconButton
 import com.example.presentation.components.RetroTopBarRule
 import com.example.presentation.components.hardShadow
@@ -85,6 +90,12 @@ import com.example.presentation.insights.InsightsBottomSheet
 import com.example.presentation.offers.OfferComparisonBottomSheet
 import com.example.util.AppLanguage
 import kotlinx.coroutines.launch
+
+private val FabBottomPadding = 8.dp
+/** Gap Material3 Scaffold leaves between the FAB and the bottom of the content area. */
+private val ScaffoldFabSpacing = 16.dp
+private val FabListBreathingRoom = 16.dp
+private val MinListBottomPadding = 100.dp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -114,6 +125,14 @@ fun DashboardScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val isImeVisible = WindowInsets.isImeVisible
+
+    // Measured FAB height (includes its own bottom padding). Drives list bottom padding so the
+    // last card can always scroll fully above the FAB, whatever the font scale or screen size.
+    var fabHeightPx by remember { mutableIntStateOf(0) }
+    val listBottomPadding = with(LocalDensity.current) {
+        val clearance = fabHeightPx.toDp() + ScaffoldFabSpacing + FabListBreathingRoom
+        maxOf(clearance, MinListBottomPadding)
+    }
 
     val topApplicationId = state.applications.firstOrNull()?.id
     val applicationsCount = state.applications.size
@@ -207,15 +226,17 @@ fun DashboardScreen(
                 onOpenExport = { showExportSheet = true }
             )
         },
+        // Scaffold already lifts the FAB above the system bars (gesture pill or 3-button bar)
+        // and keeps it at the end edge, so only its measured height matters for list padding.
         floatingActionButton = {
-            RetroButton(
+            RetroFab(
                 text = strings.addApplication,
                 onClick = onNavigateToAdd,
                 icon = Icons.Default.Add,
-                style = RetroButtonStyle.Primary,
                 modifier = Modifier
+                    .onSizeChanged { fabHeightPx = it.height }
                     .testTag("add_job_fab")
-                    .padding(bottom = 8.dp)
+                    .padding(bottom = FabBottomPadding)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -326,7 +347,7 @@ fun DashboardScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .testTag("job_applications_list"),
-                        contentPadding = PaddingValues(bottom = 100.dp),
+                        contentPadding = PaddingValues(bottom = listBottomPadding),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(
@@ -348,6 +369,7 @@ fun DashboardScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DashboardMasthead(
     currentLanguage: AppLanguage,
@@ -428,13 +450,16 @@ private fun DashboardMasthead(
         }
 
         // Control deck: actions live on their own printed strip
-        Row(
+        // FlowRow keeps AI Tools left and the utilities right on normal screens, and wraps the
+        // utilities onto a second line on very narrow ones instead of clipping them.
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(colors.surfaceVariant)
                 .border(width = 2.dp, color = colors.outline)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             RetroButton(
                 text = strings.aiTools,
@@ -442,39 +467,41 @@ private fun DashboardMasthead(
                 icon = Icons.Default.AutoAwesome,
                 style = RetroButtonStyle.Primary,
                 compact = true,
-                modifier = Modifier.testTag("dashboard_ai_tools_button")
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            LanguageToggleButton(
-                currentLanguage = currentLanguage,
-                onLanguageChange = onLanguageChange,
                 modifier = Modifier
-                    .testTag("language_toggle_button")
+                    .align(Alignment.CenterVertically)
+                    .testTag("dashboard_ai_tools_button")
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Row(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                LanguageToggleButton(
+                    currentLanguage = currentLanguage,
+                    onLanguageChange = onLanguageChange,
+                    modifier = Modifier
+                        .testTag("language_toggle_button")
+                )
 
-            RetroIconButton(
-                icon = Icons.Default.BarChart,
-                contentDescription = strings.insightsButtonDesc,
-                onClick = onOpenInsights,
-                backgroundColor = colors.surface,
-                size = 40.dp,
-                modifier = Modifier.testTag("dashboard_insights_button")
-            )
+                RetroIconButton(
+                    icon = Icons.Default.BarChart,
+                    contentDescription = strings.insightsButtonDesc,
+                    onClick = onOpenInsights,
+                    backgroundColor = colors.surface,
+                    size = 40.dp,
+                    modifier = Modifier.testTag("dashboard_insights_button")
+                )
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            RetroIconButton(
-                icon = Icons.Default.FileDownload,
-                contentDescription = strings.exportAndBackup,
-                onClick = onOpenExport,
-                backgroundColor = colors.surface,
-                size = 40.dp,
-                modifier = Modifier.testTag("dashboard_export_button")
-            )
+                RetroIconButton(
+                    icon = Icons.Default.FileDownload,
+                    contentDescription = strings.exportAndBackup,
+                    onClick = onOpenExport,
+                    backgroundColor = colors.surface,
+                    size = 40.dp,
+                    modifier = Modifier.testTag("dashboard_export_button")
+                )
+            }
         }
 
         RetroTopBarRule()

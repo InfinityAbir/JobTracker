@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
  */
 val RetroDisplay = FontFamily.Serif
 val RetroMono = FontFamily.Monospace
+val RetroBody = FontFamily.SansSerif
 
 val Typography = Typography(
     displaySmall = TextStyle(
@@ -58,25 +59,27 @@ val Typography = Typography(
         lineHeight = 18.sp,
         letterSpacing = 0.7.sp
     ),
+    // Running text (descriptions, notes, form input) uses the readable system sans;
+    // mono stays reserved for labels, dates, counters and other metadata.
     bodyLarge = TextStyle(
-        fontFamily = RetroMono,
+        fontFamily = RetroBody,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 21.sp,
-        letterSpacing = 0.sp
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
+        letterSpacing = 0.1.sp
     ),
     bodyMedium = TextStyle(
-        fontFamily = RetroMono,
+        fontFamily = RetroBody,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.5.sp,
-        lineHeight = 19.sp,
-        letterSpacing = 0.sp
+        fontSize = 13.5.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp
     ),
     bodySmall = TextStyle(
-        fontFamily = RetroMono,
+        fontFamily = RetroBody,
         fontWeight = FontWeight.Normal,
-        fontSize = 11.5.sp,
-        lineHeight = 17.sp,
+        fontSize = 12.5.sp,
+        lineHeight = 18.sp,
         letterSpacing = 0.1.sp
     ),
     labelLarge = TextStyle(

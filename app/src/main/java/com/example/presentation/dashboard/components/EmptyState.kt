@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.SearchOff
@@ -47,6 +49,8 @@ fun EmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            // Scrollable so the empty state never clips on short screens or landscape.
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 28.dp)
             .testTag("empty_state_view"),
         horizontalAlignment = Alignment.CenterHorizontally,
