@@ -126,6 +126,8 @@ dependencies {
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.okhttp)
+  // On-device OCR (Latin script, bundled model) used to read job-posting screenshots offline.
+  implementation(libs.mlkit.text.recognition)
   testImplementation(libs.turbine)
   testImplementation(libs.mockito.kotlin)
   testImplementation(libs.mockito.core)

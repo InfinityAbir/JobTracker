@@ -156,7 +156,7 @@ private fun InsightsContent(analytics: PipelineAnalytics) {
     }
 
     RetroSectionHeader(title = strings.insightsConversion, number = "02", modifier = Modifier.fillMaxWidth())
-    RetroPanel(modifier = Modifier.fillMaxWidth(), shadowOffset = 3.dp) {
+    RetroPanel(modifier = Modifier.fillMaxWidth(), shadowOffset = 2.dp) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             PercentBar(
                 label = strings.insightsInterviewRate,
@@ -177,7 +177,7 @@ private fun InsightsContent(analytics: PipelineAnalytics) {
     }
 
     RetroSectionHeader(title = strings.insightsResponseTime, number = "03", modifier = Modifier.fillMaxWidth())
-    RetroPanel(modifier = Modifier.fillMaxWidth(), shadowOffset = 3.dp) {
+    RetroPanel(modifier = Modifier.fillMaxWidth(), shadowOffset = 2.dp) {
         val avg = analytics.avgDaysToInterview
         if (avg == null) {
             Text(
@@ -208,7 +208,7 @@ private fun InsightsContent(analytics: PipelineAnalytics) {
     }
 
     RetroSectionHeader(title = strings.insightsSources, number = "04", modifier = Modifier.fillMaxWidth())
-    RetroPanel(modifier = Modifier.fillMaxWidth(), shadowOffset = 3.dp) {
+    RetroPanel(modifier = Modifier.fillMaxWidth(), shadowOffset = 2.dp) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             analytics.sources.take(5).forEach { stat ->
                 PercentBar(
@@ -232,7 +232,7 @@ private fun StatTile(value: String, label: String, modifier: Modifier = Modifier
     RetroPanel(
         modifier = modifier,
         backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-        shadowOffset = 3.dp,
+        shadowOffset = 2.dp,
         contentPadding = PaddingValues(14.dp)
     ) {
         Text(
@@ -275,7 +275,7 @@ private fun PercentBar(
                 if (detail != null) {
                     Text(
                         text = detail,
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         color = colors.onSurfaceVariant
                     )
                 }

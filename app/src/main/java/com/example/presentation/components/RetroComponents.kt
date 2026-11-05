@@ -166,9 +166,9 @@ fun RetroPanel(
     backgroundColor: Color = MaterialTheme.colorScheme.surface,
     borderColor: Color = MaterialTheme.colorScheme.outline,
     shadowColor: Color = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
-    shadowOffset: Dp = 3.dp,
+    shadowOffset: Dp = 2.dp,
     shape: Shape = RoundedCornerShape(4.dp),
-    borderWidth: Dp = 2.dp,
+    borderWidth: Dp = 1.5.dp,
     contentPadding: PaddingValues = PaddingValues(16.dp),
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
@@ -245,7 +245,7 @@ fun RetroButton(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val shadow by animateDpAsState(
-        targetValue = if (pressed) 1.dp else 3.dp,
+        targetValue = if (pressed) 1.dp else 2.dp,
         label = "retro_button_shadow"
     )
 
@@ -369,7 +369,7 @@ fun RetroStamp(
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 9.5.sp,
+                fontSize = 11.sp,
                 letterSpacing = 1.sp
             ),
             fontWeight = FontWeight.Bold,
@@ -409,7 +409,7 @@ fun RetroTag(
         }
         Text(
             text = text,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
             color = color,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -481,7 +481,7 @@ fun RetroSectionHeader(
             ) {
                 Text(
                     text = number,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                     fontWeight = FontWeight.Bold,
                     color = onAccent(accent)
                 )

@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.domain.model.JobSortOption
 import com.example.localization.LocalAppStrings
@@ -60,7 +61,9 @@ fun DashboardSearchBar(
                 Text(
                     text = strings.searchPlaceholder,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceVariant.copy(alpha = 0.6f)
+                    color = colors.onSurfaceVariant.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             },
             leadingIcon = {
@@ -98,7 +101,7 @@ fun DashboardSearchBar(
                 contentDescription = strings.sortButtonDesc,
                 onClick = { sortMenuExpanded = true },
                 size = 54.dp,
-                shadowOffset = 3.dp,
+                shadowOffset = 2.dp,
                 tint = colors.primary,
                 backgroundColor = colors.surface,
                 modifier = Modifier.testTag("sort_button")

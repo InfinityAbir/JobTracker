@@ -166,7 +166,7 @@ fun OfferComparisonBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("offer_comparison_table"),
-                shadowOffset = 3.dp
+                shadowOffset = 2.dp
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Columns(compared) { offer ->
@@ -228,7 +228,7 @@ private fun String.valueOrDash(): String = ifBlank { "—" }
 private fun RowLabel(text: String) {
     Text(
         text = text.uppercase(),
-        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.2.sp),
+        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 1.2.sp),
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary
     )

@@ -10,11 +10,18 @@ sealed interface AiToolType {
     data object MatchAnalysis : AiToolType
 }
 
+/** Dropdown value meaning "the user writes their own scenario" (see [AiToolsUiState.customEmailScenario]). */
+const val CUSTOM_EMAIL_TYPE = "__custom__"
+
+/** The AI proxy truncates the scenario at 100 characters, so the field is capped to match. */
+const val MAX_CUSTOM_SCENARIO_LENGTH = 100
+
 data class AiToolsUiState(
     val currentTool: AiToolType = AiToolType.AutoParseJob,
     val rawJobInput: String = "",
     val candidateProfileInput: String = "",
     val selectedEmailType: String = "Post-Interview Thank You",
+    val customEmailScenario: String = "",
     val generatedOutput: String = "",
     val parsedJobResult: ParsedJobData? = null,
     val matchResult: MatchAnalysisResult? = null,
@@ -34,6 +41,7 @@ sealed interface AiToolsUiEvent {
     data class OnRawJobInputChange(val text: String) : AiToolsUiEvent
     data class OnCandidateProfileChange(val text: String) : AiToolsUiEvent
     data class OnEmailTypeChange(val emailType: String) : AiToolsUiEvent
+    data class OnCustomScenarioChange(val text: String) : AiToolsUiEvent
     data class OnApiKeyInputChange(val text: String) : AiToolsUiEvent
     data object OnShowKeyEntry : AiToolsUiEvent
     data object OnSaveApiKey : AiToolsUiEvent

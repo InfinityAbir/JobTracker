@@ -124,6 +124,9 @@ class AiToolsViewModel(
             is AiToolsUiEvent.OnEmailTypeChange -> {
                 _uiState.update { it.copy(selectedEmailType = event.emailType) }
             }
+            is AiToolsUiEvent.OnCustomScenarioChange -> {
+                _uiState.update { it.copy(customEmailScenario = event.text.take(MAX_CUSTOM_SCENARIO_LENGTH)) }
+            }
             is AiToolsUiEvent.OnApiKeyInputChange -> {
                 _uiState.update { it.copy(apiKeyInput = event.text) }
             }
@@ -169,6 +172,7 @@ class AiToolsViewModel(
                 } else "",
                 candidateProfileInput = "",
                 selectedEmailType = "Post-Interview Thank You",
+                customEmailScenario = "",
                 generatedOutput = "",
                 parsedJobResult = null,
                 matchResult = null,
@@ -265,9 +269,19 @@ class AiToolsViewModel(
                         notes = state.rawJobInput
                     )
 
+                    val emailType = if (state.selectedEmailType == CUSTOM_EMAIL_TYPE) {
+                        state.customEmailScenario.trim()
+                    } else {
+                        state.selectedEmailType
+                    }
+                    if (emailType.isBlank()) {
+                        _uiState.update { it.copy(isLoading = false, errorMessage = AppStrings.current().emailCustomNeeded) }
+                        return@launch
+                    }
+
                     val result = generateFollowUpEmailUseCase(
                         application = job,
-                        emailType = state.selectedEmailType
+                        emailType = emailType
                     )
                     result.fold(
                         onSuccess = { email ->

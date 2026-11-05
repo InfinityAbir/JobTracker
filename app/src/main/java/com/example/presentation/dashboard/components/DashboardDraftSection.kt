@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,7 +36,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,6 +60,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DashboardDraftSection(
     draft: JobDraft,
@@ -147,30 +155,31 @@ fun DashboardDraftSection(
         shadowOffset = if (isHighlighted) 4.dp else 3.dp,
         contentPadding = PaddingValues(0.dp)
     ) {
-        // Left perforated edge strip
+        // Left edge strip, drawn behind the content so no intrinsic-height measuring is needed
+        // (that squashed the stacked action buttons on narrow screens).
+        val stripColor = draftColors.ink
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
+                .drawBehind {
+                    drawRect(stripColor, size = Size(6.dp.toPx(), size.height))
+                }
         ) {
-            Box(
-                modifier = Modifier
-                    .width(6.dp)
-                    .fillMaxHeight()
-                    .background(draftColors.ink)
-            )
+            Spacer(modifier = Modifier.width(6.dp))
 
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(13.dp)
             ) {
-                Row(
+                // FlowRow: the saved-time label drops below the stamp instead of wrapping letter by letter.
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Row(
+                        modifier = Modifier.align(Alignment.CenterVertically),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -182,7 +191,7 @@ fun DashboardDraftSection(
                         if (isHighlighted) {
                             Text(
                                 text = strings.filtered,
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                                 color = draftColors.ink,
                                 fontWeight = FontWeight.Bold
                             )
@@ -190,6 +199,7 @@ fun DashboardDraftSection(
                     }
 
                     Row(
+                        modifier = Modifier.align(Alignment.CenterVertically),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
@@ -201,7 +211,7 @@ fun DashboardDraftSection(
                         )
                         Text(
                             text = relativeTime,
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                             color = colors.onSurfaceVariant
                         )
                     }
@@ -253,11 +263,11 @@ fun DashboardDraftSection(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(9.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                // Narrow screens or enlarged text: stack the two actions so neither label is cut off.
+                val stackActions = LocalConfiguration.current.screenWidthDp < 360 ||
+                    LocalDensity.current.fontScale > 1.15f
+
+                val resumeButton: @Composable (Modifier) -> Unit = { buttonModifier ->
                     RetroButton(
                         text = strings.resumeEditDraft,
                         onClick = onResumeDraft,
@@ -265,17 +275,20 @@ fun DashboardDraftSection(
                         compact = true,
                         backgroundColor = draftColors.ink,
                         contentColor = onAccent(draftColors.ink),
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("resume_draft_button")
+                        modifier = buttonModifier.testTag("resume_draft_button")
                     )
-
+                }
+                val discardButton: @Composable (Modifier) -> Unit = { boxModifier ->
                     Box(
-                        modifier = Modifier
+                        modifier = boxModifier
+                            // Explicit minimum: the card measures with IntrinsicSize.Min, which
+                            // would otherwise squash the button when the actions are stacked.
+                            .heightIn(min = 44.dp)
                             .hardShadow(2.dp, colors.outline.copy(alpha = 0.35f), RoundedCornerShape(3.dp))
                             .clip(RoundedCornerShape(3.dp))
                             .background(colors.surface)
-                            .border(1.5.dp, draftColors.ink.copy(alpha = 0.55f), RoundedCornerShape(3.dp))
+                            .border(1.5.dp, draftColors.ink.copy(alpha = 0.55f), RoundedCornerShape(3.dp)),
+                        contentAlignment = Alignment.Center
                     ) {
                         TextButton(
                             onClick = { showDiscardConfirmDialog = true },
@@ -295,6 +308,25 @@ fun DashboardDraftSection(
                                 color = colors.error
                             )
                         }
+                    }
+                }
+
+                if (stackActions) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        resumeButton(Modifier.fillMaxWidth())
+                        discardButton(Modifier.fillMaxWidth())
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(9.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        resumeButton(Modifier.weight(1f))
+                        discardButton(Modifier)
                     }
                 }
             }

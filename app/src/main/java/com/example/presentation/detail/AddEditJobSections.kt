@@ -45,7 +45,7 @@ private fun SectionPanel(
             .fillMaxWidth()
             .testTag(testTag),
         backgroundColor = MaterialTheme.colorScheme.surface,
-        shadowOffset = 3.dp,
+        shadowOffset = 2.dp,
         contentPadding = PaddingValues(0.dp)
     ) {
         Row(

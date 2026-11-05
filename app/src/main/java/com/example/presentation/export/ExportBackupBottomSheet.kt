@@ -380,7 +380,7 @@ private fun ExportOptionCard(
             .testTag(testTag),
         onClick = onClick,
         backgroundColor = colors.surface,
-        shadowOffset = 3.dp,
+        shadowOffset = 2.dp,
         contentPadding = PaddingValues(0.dp)
     ) {
         Row(

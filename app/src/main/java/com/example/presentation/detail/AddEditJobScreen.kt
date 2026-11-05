@@ -90,6 +90,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -376,7 +377,7 @@ fun AddEditJobScreen(
             ) {
                 // On narrow phones the four header controls would squeeze the title to nothing,
                 // so the action cluster drops to its own line under the title.
-                val narrowHeader = LocalConfiguration.current.screenWidthDp < 360
+                val narrowHeader = LocalConfiguration.current.screenWidthDp < 400
                 val actionCluster: @Composable () -> Unit = {
                     LanguageToggleButton(
                         currentLanguage = currentLanguage,
@@ -440,19 +441,23 @@ fun AddEditJobScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = if (state.id > 0) strings.editApplicationTitle else strings.newApplicationTitle,
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = strings.aiAssistantDesc,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 9.5.sp,
-                                letterSpacing = 1.1.sp
+                                fontSize = 11.sp,
+                                letterSpacing = 0.4.sp
                             ),
                             color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -797,7 +802,7 @@ fun AddEditJobScreen(
                         .fillMaxWidth()
                         .testTag("interview_schedule_card"),
                     backgroundColor = MaterialTheme.colorScheme.surface,
-                    shadowOffset = 3.dp,
+                    shadowOffset = 2.dp,
                     contentPadding = PaddingValues(0.dp)
                 ) {
                     Row(
@@ -1117,7 +1122,7 @@ fun AddEditJobScreen(
                     .fillMaxWidth()
                     .testTag("recruiter_contact_card"),
                 backgroundColor = MaterialTheme.colorScheme.surface,
-                shadowOffset = 3.dp,
+                shadowOffset = 2.dp,
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Column(
@@ -1306,7 +1311,7 @@ internal fun DateQuickChip(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 letterSpacing = 0.4.sp
             ),
             color = content,

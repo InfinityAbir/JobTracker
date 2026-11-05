@@ -164,6 +164,16 @@ sealed class AppStrings {
     abstract val jobPostingLabel: String
     abstract val jobPostingPlaceholder: String
     abstract val clearInput: String
+    abstract val applicationsSectionTitle: String
+    abstract val emailScenarioCustom: String
+    abstract val emailCustomLabel: String
+    abstract val emailCustomPlaceholder: String
+    abstract val emailCustomNeeded: String
+    abstract val uploadJobImage: String
+    abstract val readingJobImage: String
+    abstract val jobImageNoText: String
+    abstract val jobImageReadFailed: String
+    abstract val jobImageHint: String
     abstract val targetRoleLabel: String
     abstract val targetRolePlaceholder: String
     abstract val candidateProfileLabel: String
@@ -495,6 +505,16 @@ sealed class AppStrings {
         override val jobPostingLabel = "Job Posting Text:"
         override val jobPostingPlaceholder = "Paste job posting description, key duties, and qualifications here..."
         override val clearInput = "Clear Input"
+        override val applicationsSectionTitle = "Applications"
+        override val emailScenarioCustom = "Custom (write your own)"
+        override val emailCustomLabel = "Your scenario:"
+        override val emailCustomPlaceholder = "e.g. Ask to reschedule my interview"
+        override val emailCustomNeeded = "Describe the email you want first."
+        override val uploadJobImage = "Upload Image"
+        override val readingJobImage = "Reading image…"
+        override val jobImageNoText = "No text found in that image. Try a clearer screenshot."
+        override val jobImageReadFailed = "Could not read that image. Try another one."
+        override val jobImageHint = "Text is read on your device. Check it below, then tap Extract."
         override val targetRoleLabel = "Job Context & Target Role:"
         override val targetRolePlaceholder = "e.g. Lead Android Engineer at Airbnb"
         override val candidateProfileLabel = "Your Background & Core Strengths:"
@@ -819,6 +839,16 @@ sealed class AppStrings {
         override val jobPostingLabel = "চাকরির বিজ্ঞাপনের বিবরণ:"
         override val jobPostingPlaceholder = "বিজ্ঞাপনের বিবরণ, দায়িত্ব ও যোগ্যতার অংশটুকু এখানে পেস্ট করুন..."
         override val clearInput = "ইনপুট মুছুন"
+        override val applicationsSectionTitle = "আবেদনসমূহ"
+        override val emailScenarioCustom = "নিজের মতো লিখুন"
+        override val emailCustomLabel = "আপনার পরিস্থিতি:"
+        override val emailCustomPlaceholder = "যেমন: ইন্টারভিউয়ের সময় পরিবর্তনের অনুরোধ"
+        override val emailCustomNeeded = "আগে কেমন ইমেইল চান তা লিখুন।"
+        override val uploadJobImage = "ছবি আপলোড করুন"
+        override val readingJobImage = "ছবি পড়া হচ্ছে…"
+        override val jobImageNoText = "ছবিতে কোনো লেখা পাওয়া যায়নি। আরও পরিষ্কার স্ক্রিনশট দিন।"
+        override val jobImageReadFailed = "ছবিটি পড়া যায়নি। অন্য একটি ছবি চেষ্টা করুন।"
+        override val jobImageHint = "লেখা আপনার ডিভাইসেই পড়া হয়। নিচে দেখে নিন, তারপর এক্সট্র্যাক্ট চাপুন।"
         override val targetRoleLabel = "উদ্দিষ্ট পদবী ও কোম্পানি:"
         override val targetRolePlaceholder = "যেমন: বিকাশে সিনিয়র অ্যান্ড্রয়েড ইঞ্জিনিয়ার"
         override val candidateProfileLabel = "আপনার অভিজ্ঞতা ও মূল দক্ষতা:"

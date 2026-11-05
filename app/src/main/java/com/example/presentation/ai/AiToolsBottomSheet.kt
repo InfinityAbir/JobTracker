@@ -8,6 +8,9 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,6 +45,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material.icons.filled.Refresh
@@ -63,6 +67,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,6 +98,8 @@ import com.example.presentation.components.RetroPanel
 import com.example.presentation.components.RetroTag
 import com.example.presentation.components.hardShadow
 import com.example.presentation.components.retroTextFieldColors
+import com.example.util.JobImageTextReader
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -111,6 +119,42 @@ fun AiToolsBottomSheet(
     val density = LocalDensity.current
     val isImeVisible = WindowInsets.isImeVisible || WindowInsets.ime.getBottom(density) > 0
     var hasFocus by remember { mutableStateOf(false) }
+
+    // Screenshot -> on-device OCR -> text lands in the normal paste box for review before parsing.
+    val scope = rememberCoroutineScope()
+    var isReadingImage by remember { mutableStateOf(false) }
+    var imageMessage by remember { mutableStateOf<String?>(null) }
+    var imageMessageIsError by remember { mutableStateOf(false) }
+    val currentRawInput by rememberUpdatedState(state.rawJobInput)
+    val imagePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        isReadingImage = true
+        scope.launch {
+            when (val result = JobImageTextReader.read(context, uri)) {
+                is JobImageTextReader.Result.Success -> {
+                    val existing = currentRawInput.trim()
+                    onEvent(
+                        AiToolsUiEvent.OnRawJobInputChange(
+                            if (existing.isEmpty()) result.text else "$existing\n\n${result.text}"
+                        )
+                    )
+                    imageMessage = strings.jobImageHint
+                    imageMessageIsError = false
+                }
+                JobImageTextReader.Result.NoText -> {
+                    imageMessage = strings.jobImageNoText
+                    imageMessageIsError = true
+                }
+                JobImageTextReader.Result.Failed -> {
+                    imageMessage = strings.jobImageReadFailed
+                    imageMessageIsError = true
+                }
+            }
+            isReadingImage = false
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -178,7 +222,7 @@ fun AiToolsBottomSheet(
                         Text(
                             text = strings.aiPoweredBy,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 9.sp,
+                                fontSize = 11.sp,
                                 letterSpacing = 1.1.sp
                             ),
                             color = MaterialTheme.colorScheme.primary
@@ -325,7 +369,7 @@ fun AiToolsBottomSheet(
                                 text = label,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    fontSize = 10.sp,
+                                    fontSize = 11.sp,
                                     letterSpacing = 0.2.sp
                                 ),
                                 color = content,
@@ -356,25 +400,52 @@ fun AiToolsBottomSheet(
             // Input Fields
             when (state.currentTool) {
                 AiToolType.AutoParseJob -> {
-                    Row(
+                    Text(
+                        text = strings.jobPostingLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Buttons get their own line so neither label nor button text is squeezed.
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = strings.jobPostingLabel,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        if (state.rawJobInput.isNotBlank()) {
                             RetroButton(
-                                onClick = { onEvent(AiToolsUiEvent.OnRawJobInputChange("")) },
-                                text = strings.clearInput,
+                                onClick = {
+                                    imageMessage = null
+                                    imagePicker.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                },
+                                text = if (isReadingImage) strings.readingJobImage else strings.uploadJobImage,
+                                icon = Icons.Default.Image,
                                 style = RetroButtonStyle.Secondary,
                                 compact = true,
-                                modifier = Modifier.height(28.dp)
+                                enabled = !isReadingImage,
+                                loading = isReadingImage,
+                                modifier = Modifier.testTag("upload_job_image_button")
                             )
-                        }
+                            if (state.rawJobInput.isNotBlank()) {
+                                RetroButton(
+                                    onClick = { onEvent(AiToolsUiEvent.OnRawJobInputChange("")) },
+                                    text = strings.clearInput,
+                                    style = RetroButtonStyle.Secondary,
+                                    compact = true,
+                                    modifier = Modifier.testTag("clear_job_input_button")
+                                )
+                            }
+                    }
+                    imageMessage?.let { message ->
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (imageMessageIsError) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.testTag("job_image_message")
+                        )
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
@@ -501,7 +572,8 @@ fun AiToolsBottomSheet(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         OutlinedTextField(
-                            value = state.selectedEmailType,
+                            value = if (state.selectedEmailType == CUSTOM_EMAIL_TYPE) strings.emailScenarioCustom
+                            else state.selectedEmailType,
                             onValueChange = {},
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -525,7 +597,41 @@ fun AiToolsBottomSheet(
                                     }
                                 )
                             }
+                            DropdownMenuItem(
+                                text = { Text(strings.emailScenarioCustom, fontWeight = FontWeight.Bold) },
+                                onClick = {
+                                    onEvent(AiToolsUiEvent.OnEmailTypeChange(CUSTOM_EMAIL_TYPE))
+                                    expanded = false
+                                },
+                                modifier = Modifier.testTag("email_scenario_custom_option")
+                            )
                         }
+                    }
+
+                    if (state.selectedEmailType == CUSTOM_EMAIL_TYPE) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = strings.emailCustomLabel,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = state.customEmailScenario,
+                            onValueChange = { onEvent(AiToolsUiEvent.OnCustomScenarioChange(it)) },
+                            placeholder = { Text(strings.emailCustomPlaceholder) },
+                            supportingText = {
+                                Text("${state.customEmailScenario.length}/$MAX_CUSTOM_SCENARIO_LENGTH")
+                            },
+                            minLines = 2,
+                            maxLines = 3,
+                            shape = RetroFieldShape,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusChanged { if (it.isFocused) hasFocus = true }
+                                .testTag("email_custom_scenario_input"),
+                            colors = retroTextFieldColors()
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -814,7 +920,7 @@ fun AiToolsBottomSheet(
             Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = strings.aiPrivacyNote,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (state.hasApiKey) {
@@ -866,7 +972,7 @@ internal fun MatchResultPanel(result: MatchAnalysisResult) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Text(
                     text = strings.matchScoreLabel.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.4.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 1.4.sp),
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurfaceVariant
                 )

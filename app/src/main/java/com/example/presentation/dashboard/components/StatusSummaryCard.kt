@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -82,10 +83,12 @@ fun StatusSummarySection(
             .fillMaxWidth()
             .testTag("status_summary_card"),
         backgroundColor = colors.surface,
-        shadowOffset = 3.dp,
+        shadowOffset = 2.dp,
         contentPadding = PaddingValues(14.dp)
     ) {
-        Row(
+        // FlowRow: on narrow screens or large text the Total stamp and chevron wrap onto a second
+        // line instead of squeezing the title into broken words.
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(2.dp))
@@ -93,9 +96,10 @@ fun StatusSummarySection(
                 .testTag("pipeline_card_header")
                 .padding(vertical = 1.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
+                modifier = Modifier.align(Alignment.CenterVertically),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(9.dp)
             ) {
@@ -109,7 +113,7 @@ fun StatusSummarySection(
                 ) {
                     Text(
                         text = "01",
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.5.sp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         fontWeight = FontWeight.Bold,
                         color = onAccent(colors.primary)
                     )
@@ -123,6 +127,7 @@ fun StatusSummarySection(
             }
 
             Row(
+                modifier = Modifier.align(Alignment.CenterVertically),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -383,7 +388,7 @@ private fun CompactStatusItem(
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
@@ -439,8 +444,8 @@ private fun SummaryMetricPill(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.5.sp,
-                    letterSpacing = 0.3.sp
+                    fontSize = 10.5.sp,
+                    letterSpacing = 0.sp
                 ),
                 fontWeight = FontWeight.Bold,
                 color = labelColor,

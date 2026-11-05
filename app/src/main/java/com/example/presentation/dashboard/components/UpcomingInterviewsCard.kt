@@ -119,7 +119,7 @@ private fun UpcomingInterviewItem(
             .testTag("upcoming_interview_card_${job.id}"),
         onClick = onClick,
         backgroundColor = colors.surface,
-        shadowOffset = 3.dp,
+        shadowOffset = 2.dp,
         contentPadding = PaddingValues(0.dp)
     ) {
         // Printed ticket stub header
@@ -134,7 +134,7 @@ private fun UpcomingInterviewItem(
             Text(
                 text = relativeTimeTag,
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.5.sp,
+                    fontSize = 11.sp,
                     letterSpacing = 1.1.sp
                 ),
                 fontWeight = FontWeight.Bold,
@@ -144,7 +144,7 @@ private fun UpcomingInterviewItem(
             if (job.interviewType.isNotBlank()) {
                 Text(
                     text = strings.getInterviewStageName(job.interviewType),
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                     color = if (isUrgent) {
                         colors.onErrorContainer.copy(alpha = 0.8f)
                     } else {
@@ -226,7 +226,7 @@ private fun UpcomingInterviewItem(
                     )
                     Text(
                         text = strings.alarmReminderActive(job.reminderMinutesBefore),
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         color = colors.primary,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1

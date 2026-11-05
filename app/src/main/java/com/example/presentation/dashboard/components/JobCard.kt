@@ -78,8 +78,11 @@ fun JobCard(
         }
     )
 
+    // The caller's modifier (page margins) belongs on the swipe box, so the red delete background
+    // is clipped to the same edges as the card instead of bleeding into the margins.
     SwipeToDismissBox(
         state = dismissState,
+        modifier = modifier,
         enableDismissFromStartToEnd = false,
         enableDismissFromEndToStart = true,
         backgroundContent = {
@@ -117,7 +120,6 @@ fun JobCard(
             JobCardContent(
                 application = application,
                 onClick = onClick,
-                modifier = modifier,
                 staleDays = staleDays,
                 onFollowUp = onFollowUp
             )
@@ -145,7 +147,7 @@ private fun JobCardContent(
             .testTag("job_card_${application.id}"),
         onClick = onClick,
         backgroundColor = colors.surface,
-        shadowOffset = 3.dp,
+        shadowOffset = 2.dp,
         contentPadding = PaddingValues(14.dp)
     ) {
         Row(
@@ -174,16 +176,25 @@ private fun JobCardContent(
             Spacer(modifier = Modifier.width(11.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "#${application.id.toString().padStart(4, '0')}",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp,
-                        letterSpacing = 1.4.sp
-                    ),
-                    color = colors.primary,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(1.dp))
+                // Status sits on the id line so the job title can use the full width below it.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "#${application.id.toString().padStart(4, '0')}",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
+                            letterSpacing = 1.4.sp
+                        ),
+                        color = colors.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    StatusChip(status = application.status)
+                }
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = application.jobTitle,
                     style = MaterialTheme.typography.titleMedium,
@@ -204,10 +215,6 @@ private fun JobCardContent(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            StatusChip(status = application.status)
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -281,7 +288,7 @@ private fun JobCardContent(
                         Text(
                             text = strings.interviewBadgeLabel,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 9.sp,
+                                fontSize = 11.sp,
                                 letterSpacing = 1.1.sp
                             ),
                             color = colors.primary,
@@ -301,7 +308,7 @@ private fun JobCardContent(
                     if (application.reminderSet) {
                         Text(
                             text = strings.interviewAlertMinutes(application.reminderMinutesBefore),
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                             color = colors.primary,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1
@@ -370,7 +377,7 @@ fun StatusChip(
             text = strings.getStatusDisplayName(status),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Bold,
-                fontSize = 9.5.sp,
+                fontSize = 11.sp,
                 letterSpacing = 0.7.sp
             ),
             color = palette.ink,

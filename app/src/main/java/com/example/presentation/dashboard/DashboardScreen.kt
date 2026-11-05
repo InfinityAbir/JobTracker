@@ -56,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -125,6 +126,12 @@ fun DashboardScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val isImeVisible = WindowInsets.isImeVisible
+
+    // Small screens or enlarged text: the header would eat a third of the screen if pinned,
+    // so it becomes the first item of the list and scrolls away with the content.
+    val compactChrome = LocalConfiguration.current.screenWidthDp < 360 ||
+        LocalDensity.current.fontScale > 1.15f
+    val pageEdge = Modifier.padding(horizontal = 14.dp)
 
     // Measured FAB height (includes its own bottom padding). Drives list bottom padding so the
     // last card can always scroll fully above the FAB, whatever the font scale or screen size.
@@ -218,13 +225,15 @@ fun DashboardScreen(
         modifier = modifier.testTag("dashboard_screen"),
         containerColor = Color.Transparent,
         topBar = {
-            DashboardMasthead(
-                currentLanguage = currentLanguage,
-                onLanguageChange = onLanguageChange,
-                onOpenAiTools = onOpenAiTools,
-                onOpenInsights = { showInsightsSheet = true },
-                onOpenExport = { showExportSheet = true }
-            )
+            if (!compactChrome) {
+                DashboardMasthead(
+                    currentLanguage = currentLanguage,
+                    onLanguageChange = onLanguageChange,
+                    onOpenAiTools = onOpenAiTools,
+                    onOpenInsights = { showInsightsSheet = true },
+                    onOpenExport = { showExportSheet = true }
+                )
+            }
         },
         // Scaffold already lifts the FAB above the system bars (gesture pill or 3-button bar)
         // and keeps it at the end edge, so only its measured height matters for list padding.
@@ -241,79 +250,104 @@ fun DashboardScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
-        Column(
+        // One scrolling list for the whole dashboard. Summary, draft, interviews and search used to be
+        // pinned above a fixed-height list, which squeezed the applications on shorter screens.
+        LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 14.dp)
+                .testTag("job_applications_list"),
+            contentPadding = PaddingValues(top = if (compactChrome) 0.dp else 14.dp, bottom = listBottomPadding),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            StatusSummarySection(
-                summary = state.summary,
-                selectedStatus = state.selectedStatus,
-                onStatusSelected = { status ->
-                    onEvent(DashboardUiEvent.OnStatusFilterSelected(status))
-                },
-                isDraftSelected = state.isDraftFilterSelected,
-                onDraftSelected = {
-                    onEvent(DashboardUiEvent.OnDraftFilterToggled)
-                },
-                isExpanded = isPipelineExpanded,
-                onToggleExpanded = {
-                    isPipelineExpanded = !isPipelineExpanded
-                },
-                modifier = Modifier.padding(top = 14.dp, bottom = 12.dp)
-            )
+            if (compactChrome) {
+                item(key = "masthead") {
+                    DashboardMasthead(
+                        currentLanguage = currentLanguage,
+                        onLanguageChange = onLanguageChange,
+                        onOpenAiTools = onOpenAiTools,
+                        onOpenInsights = { showInsightsSheet = true },
+                        onOpenExport = { showExportSheet = true },
+                        pinned = false
+                    )
+                }
+            }
+
+            item(key = "summary") {
+                StatusSummarySection(
+                    summary = state.summary,
+                    selectedStatus = state.selectedStatus,
+                    onStatusSelected = { status ->
+                        onEvent(DashboardUiEvent.OnStatusFilterSelected(status))
+                    },
+                    isDraftSelected = state.isDraftFilterSelected,
+                    onDraftSelected = {
+                        onEvent(DashboardUiEvent.OnDraftFilterToggled)
+                    },
+                    isExpanded = isPipelineExpanded,
+                    onToggleExpanded = {
+                        isPipelineExpanded = !isPipelineExpanded
+                    },
+                    modifier = pageEdge
+                )
+            }
 
             if (state.activeDraft != null && (state.isDraftFilterSelected || (state.selectedStatus == null && state.searchQuery.isBlank()))) {
-                DashboardDraftSection(
-                    draft = state.activeDraft,
-                    onResumeDraft = onNavigateToAdd,
-                    onDiscardDraft = { onEvent(DashboardUiEvent.OnDiscardDraft) },
-                    isHighlighted = state.isDraftFilterSelected,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
+                item(key = "draft") {
+                    DashboardDraftSection(
+                        draft = state.activeDraft,
+                        onResumeDraft = onNavigateToAdd,
+                        onDiscardDraft = { onEvent(DashboardUiEvent.OnDiscardDraft) },
+                        isHighlighted = state.isDraftFilterSelected,
+                        modifier = pageEdge
+                    )
+                }
             }
 
             if (state.upcomingInterviews.isNotEmpty() && !state.isDraftFilterSelected) {
-                UpcomingInterviewsSection(
-                    interviews = state.upcomingInterviews,
-                    onSelectJob = onNavigateToEdit,
-                    modifier = Modifier.padding(bottom = 14.dp)
-                )
+                item(key = "interviews") {
+                    UpcomingInterviewsSection(
+                        interviews = state.upcomingInterviews,
+                        onSelectJob = onNavigateToEdit,
+                        modifier = pageEdge
+                    )
+                }
             }
 
             if (offers.size >= 2 && !state.isDraftFilterSelected) {
-                RetroButton(
-                    text = strings.compareOffersButton(offers.size),
-                    onClick = { showOffersSheet = true },
-                    icon = Icons.Default.CompareArrows,
-                    style = RetroButtonStyle.Secondary,
-                    compact = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp)
-                        .testTag("compare_offers_button")
-                )
+                item(key = "compare_offers") {
+                    RetroButton(
+                        text = strings.compareOffersButton(offers.size),
+                        onClick = { showOffersSheet = true },
+                        icon = Icons.Default.CompareArrows,
+                        style = RetroButtonStyle.Secondary,
+                        compact = true,
+                        modifier = pageEdge
+                            .fillMaxWidth()
+                            .testTag("compare_offers_button")
+                    )
+                }
             }
 
             if (!state.isDraftFilterSelected) {
-                DashboardSearchBar(
-                    query = state.searchQuery,
-                    onQueryChange = { onEvent(DashboardUiEvent.OnSearchQueryChange(it)) },
-                    selectedSort = state.sortOption,
-                    onSortSelected = { onEvent(DashboardUiEvent.OnSortOptionSelected(it)) },
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
+                item(key = "search") {
+                    DashboardSearchBar(
+                        query = state.searchQuery,
+                        onQueryChange = { onEvent(DashboardUiEvent.OnSearchQueryChange(it)) },
+                        selectedSort = state.sortOption,
+                        onSortSelected = { onEvent(DashboardUiEvent.OnSortOptionSelected(it)) },
+                        modifier = pageEdge
+                    )
+                }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) {
-                if (state.isLoading) {
+            when {
+                state.isLoading -> item(key = "loading") {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
@@ -322,17 +356,23 @@ fun DashboardScreen(
                             modifier = Modifier.testTag("loading_indicator")
                         )
                     }
-                } else if (state.isDraftFilterSelected) {
+                }
+
+                state.isDraftFilterSelected -> {
                     if (state.activeDraft == null) {
-                        EmptyState(
-                            isSearching = true,
-                            onAddApplication = onNavigateToAdd,
-                            onClearSearch = {
-                                onEvent(DashboardUiEvent.OnDraftFilterToggled)
-                            }
-                        )
+                        item(key = "empty_draft") {
+                            EmptyState(
+                                isSearching = true,
+                                onAddApplication = onNavigateToAdd,
+                                onClearSearch = {
+                                    onEvent(DashboardUiEvent.OnDraftFilterToggled)
+                                }
+                            )
+                        }
                     }
-                } else if (state.applications.isEmpty()) {
+                }
+
+                state.applications.isEmpty() -> item(key = "empty") {
                     EmptyState(
                         isSearching = state.searchQuery.isNotBlank() || state.selectedStatus != null,
                         onAddApplication = onNavigateToAdd,
@@ -341,27 +381,42 @@ fun DashboardScreen(
                             onEvent(DashboardUiEvent.OnStatusFilterSelected(null))
                         }
                     )
-                } else {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .testTag("job_applications_list"),
-                        contentPadding = PaddingValues(bottom = listBottomPadding),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(
-                            items = state.applications,
-                            key = { it.id }
-                        ) { application ->
-                            JobCard(
-                                application = application,
-                                onClick = { onNavigateToEdit(application.id) },
-                                onDelete = { onEvent(DashboardUiEvent.OnDeleteApplication(application)) },
-                                staleDays = StaleApplications.daysWithoutUpdate(application),
-                                onFollowUp = { onFollowUp(application.id) }
+                }
+
+                else -> {
+                    // Section header: tells the user where the list starts and how many records match.
+                    item(key = "section_header") {
+                        Row(
+                            modifier = pageEdge.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = strings.applicationsSectionTitle,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = state.applications.size.toString().padStart(2, '0'),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.testTag("applications_count")
                             )
                         }
+                    }
+
+                    items(
+                        items = state.applications,
+                        key = { it.id }
+                    ) { application ->
+                        JobCard(
+                            application = application,
+                            onClick = { onNavigateToEdit(application.id) },
+                            onDelete = { onEvent(DashboardUiEvent.OnDeleteApplication(application)) },
+                            staleDays = StaleApplications.daysWithoutUpdate(application),
+                            onFollowUp = { onFollowUp(application.id) },
+                            modifier = pageEdge
+                        )
                     }
                 }
             }
@@ -376,7 +431,8 @@ private fun DashboardMasthead(
     onLanguageChange: (AppLanguage) -> Unit,
     onOpenAiTools: () -> Unit,
     onOpenInsights: () -> Unit,
-    onOpenExport: () -> Unit
+    onOpenExport: () -> Unit,
+    pinned: Boolean = true
 ) {
     val strings = LocalAppStrings.current
     val colors = MaterialTheme.colorScheme
@@ -386,7 +442,7 @@ private fun DashboardMasthead(
         modifier = Modifier
             .fillMaxWidth()
             .background(colors.surface)
-            .statusBarsPadding()
+            .then(if (pinned) Modifier.statusBarsPadding() else Modifier)
     ) {
         // Printed edge stripe
         Box(
@@ -456,7 +512,7 @@ private fun DashboardMasthead(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(colors.surfaceVariant)
-                .border(width = 2.dp, color = colors.outline)
+                .border(width = 1.dp, color = colors.outlineVariant)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalArrangement = Arrangement.spacedBy(4.dp)

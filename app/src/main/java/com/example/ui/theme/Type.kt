@@ -99,7 +99,7 @@ val Typography = Typography(
     labelSmall = TextStyle(
         fontFamily = RetroMono,
         fontWeight = FontWeight.Medium,
-        fontSize = 10.sp,
+        fontSize = 11.sp,
         lineHeight = 14.sp,
         letterSpacing = 0.7.sp
     )
