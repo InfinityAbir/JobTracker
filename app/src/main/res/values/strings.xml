@@ -17,5 +17,6 @@
     <string name="empty_applications_subtitle">Tap the + button to track your first job application.</string>
     <string name="empty_search_title">No matches found</string>
     <string name="empty_search_subtitle">Try searching with a different keyword or filter.</string>
+    <string name="widget_description">Next interview and pipeline counts at a glance.</string>
 </resources>
 

@@ -63,6 +63,14 @@ sealed class AppStrings {
     abstract val relativeYesterday: String
     abstract val relativeScheduled: String
 
+    // Home-screen widget
+    abstract val widgetNextInterview: String
+    abstract val widgetNoInterviews: String
+    abstract val widgetNoInterviewsHint: String
+    abstract val widgetHappeningNow: String
+    abstract fun widgetStartsIn(totalMinutes: Long): String
+    abstract fun widgetFollowUps(count: Int): String
+
     // Search & Sort
     abstract val searchPlaceholder: String
     abstract val clearSearch: String
@@ -408,6 +416,22 @@ sealed class AppStrings {
         override val relativeYesterday = "Yesterday"
         override val relativeScheduled = "Scheduled"
 
+        override val widgetNextInterview = "NEXT INTERVIEW"
+        override val widgetNoInterviews = "No interviews scheduled"
+        override val widgetNoInterviewsHint = "Open the app to add one"
+        override val widgetHappeningNow = "Happening now"
+        override fun widgetStartsIn(totalMinutes: Long): String {
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+            return when {
+                hours == 0L -> "In ${minutes}m"
+                minutes == 0L -> "In ${hours}h"
+                else -> "In ${hours}h ${minutes}m"
+            }
+        }
+        override fun widgetFollowUps(count: Int) =
+            if (count == 1) "1 follow-up due" else "$count follow-ups due"
+
         override val searchPlaceholder = "Search company, title, notes..."
         override val clearSearch = "Clear Search"
         override val sortButtonDesc = "Sort Applications"
@@ -741,6 +765,21 @@ sealed class AppStrings {
         override fun relativeInWeeks(weeks: Long) = "$weeks সপ্তাহ পর"
         override val relativeYesterday = "গতকাল"
         override val relativeScheduled = "নির্ধারিত"
+
+        override val widgetNextInterview = "পরবর্তী ইন্টারভিউ"
+        override val widgetNoInterviews = "কোনো ইন্টারভিউ নির্ধারিত নেই"
+        override val widgetNoInterviewsHint = "যোগ করতে অ্যাপ খুলুন"
+        override val widgetHappeningNow = "এখন চলছে"
+        override fun widgetStartsIn(totalMinutes: Long): String {
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+            return when {
+                hours == 0L -> "$minutes মিনিট পর"
+                minutes == 0L -> "$hours ঘণ্টা পর"
+                else -> "$hours ঘণ্টা $minutes মিনিট পর"
+            }
+        }
+        override fun widgetFollowUps(count: Int) = "$count টি ফলো-আপ বাকি"
 
         override val searchPlaceholder = "কোম্পানি, পদবী বা নোট খুঁজুন..."
         override val clearSearch = "অনুসন্ধান মুছুন"

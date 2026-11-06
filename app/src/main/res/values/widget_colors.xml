@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home-screen widget palette (matches the app's dark "terminal" theme) -->
+    <color name="widget_bg">#FF201911</color>
+    <color name="widget_bg_inset">#FF2E2419</color>
+    <color name="widget_outline">#FF7A654A</color>
+    <color name="widget_ink">#FFF4E7CD</color>
+    <color name="widget_muted">#FFC5B093</color>
+    <color name="widget_amber">#FFF2A65A</color>
+    <color name="widget_on_amber">#FF241A12</color>
+    <color name="widget_applied">#FF8AC8DC</color>
+    <color name="widget_interviewing">#FFF0B45B</color>
+    <color name="widget_offer">#FFA9CB80</color>
+</resources>

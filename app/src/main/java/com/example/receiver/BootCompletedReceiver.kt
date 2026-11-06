@@ -6,6 +6,7 @@ import android.content.Intent
 import com.example.JobTrackerApp
 import com.example.data.mapper.toDomain
 import com.example.util.InterviewNotificationHelper
+import com.example.widget.JobTrackerWidgetProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,6 +34,8 @@ class BootCompletedReceiver : BroadcastReceiver() {
                 } catch (e: Exception) {
                     // Ignore restore errors on boot
                 } finally {
+                    // Alarms are wiped on reboot, so restart the widget's refresh cycle too.
+                    JobTrackerWidgetProvider.requestUpdate(context)
                     pendingResult.finish()
                 }
             }

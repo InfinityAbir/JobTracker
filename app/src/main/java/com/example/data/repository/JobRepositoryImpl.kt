@@ -7,6 +7,7 @@ import com.example.data.mapper.toEntity
 import com.example.domain.model.JobApplication
 import com.example.domain.repository.JobRepository
 import com.example.util.LocalAutoBackupManager
+import com.example.widget.JobTrackerWidgetProvider
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,7 @@ class JobRepositoryImpl(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : JobRepository {
 
+    /** Runs after every write: refreshes the local auto-backup and the home-screen widget. */
     private suspend fun syncBackup() {
         try {
             val all = dao.getAllDirect().map { it.toDomain() }
@@ -26,6 +28,7 @@ class JobRepositoryImpl(
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        JobTrackerWidgetProvider.requestUpdate(context)
     }
 
     override fun getApplications(): Flow<List<JobApplication>> {

@@ -30,6 +30,8 @@ object LanguageManager {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().putString(KEY_LANGUAGE, language.code).apply()
         _currentLanguage.value = language
+        // The home-screen widget shows localized text, so redraw it in the new language.
+        com.example.widget.JobTrackerWidgetProvider.requestUpdate(context.applicationContext)
     }
 
     fun toggleLanguage(context: Context) {

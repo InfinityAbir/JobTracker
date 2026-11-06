@@ -3,6 +3,7 @@ package com.example.presentation.dashboard
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.domain.analytics.upcomingInterviews
 import com.example.domain.model.JobApplication
 import com.example.domain.model.JobSortOption
 import com.example.domain.model.JobStatus
@@ -77,9 +78,7 @@ class DashboardViewModel(
         _draftAndMessage
     ) { apps, allApps, summary, filter, draftAndMsg ->
         val (draft, message) = draftAndMsg
-        val upcoming = allApps
-            .filter { it.interviewDate.isNotBlank() }
-            .sortedBy { it.interviewDate }
+        val upcoming = allApps.upcomingInterviews(System.currentTimeMillis())
 
         // If draft filter is active, only non-draft apps are hidden from the normal list so the Draft section takes focus
         val displayedApps = if (filter.isDraftFilter) emptyList() else apps

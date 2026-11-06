@@ -46,6 +46,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -90,6 +91,8 @@ import com.example.presentation.export.ExportBackupBottomSheet
 import com.example.presentation.insights.InsightsBottomSheet
 import com.example.presentation.offers.OfferComparisonBottomSheet
 import com.example.util.AppLanguage
+import com.example.domain.analytics.upcomingInterviews
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val FabBottomPadding = 8.dp
@@ -201,6 +204,18 @@ fun DashboardScreen(
     val allApplications = state.rawApplications.ifEmpty { state.applications }
     val offers = allApplications.filter { it.status == JobStatus.OFFER }
 
+    // Clock that ticks once a minute so a finished interview drops off the Upcoming strip on its own.
+    var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            nowMillis = System.currentTimeMillis()
+            delay(60_000L)
+        }
+    }
+    val upcomingInterviews = remember(state.upcomingInterviews, nowMillis) {
+        state.upcomingInterviews.upcomingInterviews(nowMillis)
+    }
+
     if (showInsightsSheet) {
         InsightsBottomSheet(
             applications = allApplications,
@@ -305,10 +320,10 @@ fun DashboardScreen(
                 }
             }
 
-            if (state.upcomingInterviews.isNotEmpty() && !state.isDraftFilterSelected) {
+            if (upcomingInterviews.isNotEmpty() && !state.isDraftFilterSelected) {
                 item(key = "interviews") {
                     UpcomingInterviewsSection(
-                        interviews = state.upcomingInterviews,
+                        interviews = upcomingInterviews,
                         onSelectJob = onNavigateToEdit,
                         modifier = pageEdge
                     )
