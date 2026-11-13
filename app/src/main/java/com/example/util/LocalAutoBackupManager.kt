@@ -2,6 +2,7 @@ package com.example.util
 
 import android.content.Context
 import android.net.Uri
+import com.example.domain.analytics.hasLiveInterview
 import com.example.domain.model.JobApplication
 import com.example.domain.model.JobStatus
 import com.example.localization.AppStrings
@@ -83,7 +84,7 @@ object LocalAutoBackupManager {
 
             // Reschedule active interview alarms
             for (app in backedUpApps) {
-                if (app.reminderSet && app.interviewDate.isNotBlank()) {
+                if (app.reminderSet && app.hasLiveInterview()) {
                     InterviewNotificationHelper.scheduleInterviewAlarm(context, app)
                 }
             }

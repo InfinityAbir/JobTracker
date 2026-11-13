@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.example.JobTrackerApp
 import com.example.data.mapper.toDomain
+import com.example.domain.analytics.hasLiveInterview
 import com.example.util.InterviewNotificationHelper
 import com.example.widget.JobTrackerWidgetProvider
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +28,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
                     val entities = database.jobApplicationDao().getAllDirect()
                     entities.forEach { entity ->
                         val domain = entity.toDomain()
-                        if (domain.reminderSet && domain.interviewDate.isNotBlank()) {
+                        if (domain.reminderSet && domain.hasLiveInterview()) {
                             InterviewNotificationHelper.scheduleInterviewAlarm(context, domain)
                         }
                     }

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
@@ -34,7 +35,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.domain.analytics.hasLiveInterview
 import com.example.domain.model.JobApplication
 import com.example.domain.model.JobStatus
 import com.example.localization.LocalAppStrings
@@ -66,17 +70,58 @@ fun JobCard(
     onFollowUp: (() -> Unit)? = null
 ) {
     val strings = LocalAppStrings.current
-    val currentOnDelete by rememberUpdatedState(onDelete)
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    // Swiping only asks for confirmation: returning false snaps the card back until the user agrees.
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
-                currentOnDelete()
-                true
-            } else {
-                false
+                showDeleteDialog = true
             }
+            false
         }
     )
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(4.dp),
+            title = {
+                Text(
+                    text = strings.deleteDialogTitle,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = strings.deleteDialogMessage,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                RetroButton(
+                    text = strings.deleteButton,
+                    onClick = {
+                        showDeleteDialog = false
+                        onDelete()
+                    },
+                    style = RetroButtonStyle.Danger,
+                    compact = true,
+                    modifier = Modifier.testTag("confirm_swipe_delete_button")
+                )
+            },
+            dismissButton = {
+                RetroButton(
+                    text = strings.cancelButton,
+                    onClick = { showDeleteDialog = false },
+                    style = RetroButtonStyle.Secondary,
+                    compact = true,
+                    modifier = Modifier.testTag("cancel_swipe_delete_button")
+                )
+            }
+        )
+    }
 
     // The caller's modifier (page margins) belongs on the swipe box, so the red delete background
     // is clipped to the same edges as the card instead of bleeding into the margins.
@@ -256,7 +301,7 @@ private fun JobCardContent(
         }
 
         // Scheduled interview ticket
-        if (application.interviewDate.isNotBlank()) {
+        if (application.hasLiveInterview()) {
             Spacer(modifier = Modifier.height(10.dp))
             Row(
                 modifier = Modifier

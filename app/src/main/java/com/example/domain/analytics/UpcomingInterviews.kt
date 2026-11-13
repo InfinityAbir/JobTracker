@@ -1,6 +1,7 @@
 package com.example.domain.analytics
 
 import com.example.domain.model.JobApplication
+import com.example.domain.model.JobStatus
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -55,11 +56,19 @@ fun JobApplication.interviewExpiryMillis(): Long? {
 }
 
 /**
+ * True when the application has an interview worth showing or reminding about. A rejected
+ * application is over, so its interview (kept in the record for the stats) is not live.
+ */
+fun JobApplication.hasLiveInterview(): Boolean =
+    interviewDate.isNotBlank() && status != JobStatus.REJECTED
+
+/**
  * Interviews that are still ahead of [now], soonest first. Past interviews drop off automatically;
  * an interview with an unreadable date is kept so it is never silently lost.
+ * Rejected applications are skipped.
  */
 fun List<JobApplication>.upcomingInterviews(now: Long): List<JobApplication> =
-    filter { it.interviewDate.isNotBlank() }
+    filter { it.hasLiveInterview() }
         .filter { job -> job.interviewExpiryMillis()?.let { it > now } ?: true }
         .sortedWith(
             compareBy<JobApplication> { it.interviewDate }

@@ -221,7 +221,8 @@ fun AddEditJobScreen(
 
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) {
-            if (state.reminderSet && state.interviewDate.isNotBlank()) {
+            // A rejected application is finished: no reminder, and any existing alarm is cancelled below.
+            if (state.reminderSet && state.interviewDate.isNotBlank() && state.status != JobStatus.REJECTED) {
                 val tempApp = JobApplication(
                     id = if (state.id > 0) state.id else System.currentTimeMillis() % 100000,
                     companyName = state.companyName,
