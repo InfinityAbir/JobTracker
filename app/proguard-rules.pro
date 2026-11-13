@@ -23,6 +23,14 @@
 -dontwarn okhttp3.**
 -dontwarn okio.**
 
+# ML Kit on-device OCR: its model loading is reflection/dynamic-module based; R8 must not strip it
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_vision_text_common.** { *; }
+-keep class com.google.android.gms.internal.mlkit_vision_text_bundled_common.** { *; }
+-keep class com.google.android.gms.internal.mlkit_vision_common.** { *; }
+-keep class com.google.android.gms.internal.mlkit_common.** { *; }
+-dontwarn com.google.mlkit.**
+
 # Optimize line numbers for crash reporting
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
