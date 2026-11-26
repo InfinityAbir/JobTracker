@@ -53,7 +53,9 @@ data class JobApplication(
     /** Epoch millis of the first move to Interviewing/Offer; 0 = unknown (older records). */
     val interviewingAt: Long = 0,
     /** Epoch millis when a follow-up email was last drafted; 0 = never. */
-    val lastFollowUpAt: Long = 0
+    val lastFollowUpAt: Long = 0,
+    /** Epoch millis when moved to trash; 0 = not in trash. */
+    val deletedAt: Long = 0
 ) {
     val benefitKeys: Set<String>
         get() = offerBenefits.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()

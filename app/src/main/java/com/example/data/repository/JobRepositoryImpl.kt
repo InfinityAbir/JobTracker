@@ -74,4 +74,24 @@ class JobRepositoryImpl(
         dao.deleteApplicationById(id)
         syncBackup()
     }
+
+    override fun getTrashedApplications(): Flow<List<JobApplication>> {
+        return dao.getTrashed().map { list -> list.map { it.toDomain() } }
+    }
+
+    override suspend fun moveToTrash(id: Long) = withContext(ioDispatcher) {
+        dao.moveToTrash(id, System.currentTimeMillis())
+        syncBackup()
+    }
+
+    override suspend fun restoreFromTrash(id: Long) = withContext(ioDispatcher) {
+        dao.restoreFromTrash(id)
+        syncBackup()
+    }
+
+    override suspend fun emptyTrash(): Int = withContext(ioDispatcher) {
+        val removed = dao.emptyTrash()
+        syncBackup()
+        removed
+    }
 }

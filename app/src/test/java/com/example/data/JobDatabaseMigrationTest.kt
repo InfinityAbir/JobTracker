@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.local.JobDatabase
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -92,6 +93,41 @@ class JobDatabaseMigrationTest {
             assertEquals("", job.prepNegotiation)
             assertEquals(0L, job.interviewingAt)
             assertEquals(0L, job.lastFollowUpAt)
+
+            // v5 trash column: existing applications must stay live, not land in the trash
+            assertEquals(0L, job.deletedAt)
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test
+    fun trash_hidesFromLiveQueries_restoreAndEmptyWork() = runBlocking {
+        createV3Database()
+
+        val database = Room.databaseBuilder(context, JobDatabase::class.java, dbName)
+            .addMigrations(*JobDatabase.MIGRATIONS)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            val dao = database.jobApplicationDao()
+            val id = dao.getAllDirect().first().id
+
+            dao.moveToTrash(id, 5_000L)
+            // Out of every live query (list, backup/widget/reminder source) but present in the trash
+            assertTrue(dao.getAllDirect().isEmpty())
+            assertTrue(dao.getAllApplications().first().isEmpty())
+            assertEquals(listOf(id), dao.getTrashed().first().map { it.id })
+            assertEquals(5_000L, dao.getApplicationByIdDirect(id)!!.deletedAt)
+
+            dao.restoreFromTrash(id)
+            assertEquals(1, dao.getAllDirect().size)
+            assertTrue(dao.getTrashed().first().isEmpty())
+
+            dao.moveToTrash(id, 6_000L)
+            assertEquals(1, dao.emptyTrash())
+            assertTrue(dao.getTrashed().first().isEmpty())
+            assertEquals(null, dao.getApplicationByIdDirect(id))
         } finally {
             database.close()
         }

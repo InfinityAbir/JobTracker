@@ -23,6 +23,10 @@ class JobViewModelFactory(
                     getStatusSummaryUseCase = appContainer.getStatusSummaryUseCase,
                     deleteJobApplicationUseCase = appContainer.deleteJobApplicationUseCase,
                     saveJobApplicationUseCase = appContainer.saveJobApplicationUseCase,
+                    getTrashedJobsUseCase = appContainer.getTrashedJobsUseCase,
+                    restoreJobFromTrashUseCase = appContainer.restoreJobFromTrashUseCase,
+                    deleteJobPermanentlyUseCase = appContainer.deleteJobPermanentlyUseCase,
+                    emptyTrashUseCase = appContainer.emptyTrashUseCase,
                     context = appContainer.context
                 ) as T
             }

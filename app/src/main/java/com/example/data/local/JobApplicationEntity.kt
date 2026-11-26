@@ -45,5 +45,8 @@ data class JobApplicationEntity(
     @ColumnInfo(defaultValue = "0")
     val interviewingAt: Long = 0,
     @ColumnInfo(defaultValue = "0")
-    val lastFollowUpAt: Long = 0
+    val lastFollowUpAt: Long = 0,
+    // --- Added in schema v5 (see JobDatabase.MIGRATION_4_5). 0 = live, >0 = epoch millis moved to trash. ---
+    @ColumnInfo(defaultValue = "0")
+    val deletedAt: Long = 0
 )

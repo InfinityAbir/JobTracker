@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.CircularProgressIndicator
@@ -89,6 +90,7 @@ import com.example.presentation.dashboard.components.StatusSummarySection
 import com.example.presentation.dashboard.components.UpcomingInterviewsSection
 import com.example.presentation.export.ExportBackupBottomSheet
 import com.example.presentation.insights.InsightsBottomSheet
+import com.example.presentation.trash.TrashBottomSheet
 import com.example.presentation.offers.OfferComparisonBottomSheet
 import com.example.util.AppLanguage
 import com.example.domain.analytics.upcomingInterviews
@@ -123,6 +125,8 @@ fun DashboardScreen(
     var showInsightsSheet by remember { mutableStateOf(false) }
     val offersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showOffersSheet by remember { mutableStateOf(false) }
+    val trashSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showTrashSheet by remember { mutableStateOf(false) }
     var isPipelineExpanded by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -175,7 +179,7 @@ fun DashboardScreen(
 
     LaunchedEffect(state.userMessage) {
         state.userMessage?.let { message ->
-            val isDeletionMessage = message.contains("deleted", ignoreCase = true)
+            val isDeletionMessage = state.canUndoDelete
             val result = snackbarHostState.showSnackbar(
                 message = message,
                 actionLabel = if (isDeletionMessage) strings.undo else null,
@@ -222,6 +226,19 @@ fun DashboardScreen(
             sheetState = insightsSheetState,
             onDismiss = {
                 scope.launch { insightsSheetState.hide() }.invokeOnCompletion { showInsightsSheet = false }
+            }
+        )
+    }
+
+    if (showTrashSheet) {
+        TrashBottomSheet(
+            trashed = state.trashedApplications,
+            sheetState = trashSheetState,
+            onRestore = { onEvent(DashboardUiEvent.OnRestoreFromTrash(it)) },
+            onDeleteForever = { onEvent(DashboardUiEvent.OnDeleteForever(it)) },
+            onEmptyTrash = { onEvent(DashboardUiEvent.OnEmptyTrash) },
+            onDismiss = {
+                scope.launch { trashSheetState.hide() }.invokeOnCompletion { showTrashSheet = false }
             }
         )
     }
@@ -341,6 +358,22 @@ fun DashboardScreen(
                         modifier = pageEdge
                             .fillMaxWidth()
                             .testTag("compare_offers_button")
+                    )
+                }
+            }
+
+            // Only shown while the trash has something in it, so it never clutters a clean list.
+            if (state.trashedApplications.isNotEmpty() && !state.isDraftFilterSelected) {
+                item(key = "trash_entry") {
+                    RetroButton(
+                        text = strings.trashButton(state.trashedApplications.size),
+                        onClick = { showTrashSheet = true },
+                        icon = Icons.Default.Delete,
+                        style = RetroButtonStyle.Secondary,
+                        compact = true,
+                        modifier = pageEdge
+                            .fillMaxWidth()
+                            .testTag("open_trash_button")
                     )
                 }
             }

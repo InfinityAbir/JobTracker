@@ -33,7 +33,8 @@ fun JobApplicationEntity.toDomain(): JobApplication {
         prepStar = prepStar,
         prepNegotiation = prepNegotiation,
         interviewingAt = interviewingAt,
-        lastFollowUpAt = lastFollowUpAt
+        lastFollowUpAt = lastFollowUpAt,
+        deletedAt = deletedAt
     )
 }
 
@@ -66,6 +67,7 @@ fun JobApplication.toEntity(): JobApplicationEntity {
         prepStar = prepStar,
         prepNegotiation = prepNegotiation,
         interviewingAt = interviewingAt,
-        lastFollowUpAt = lastFollowUpAt
+        lastFollowUpAt = lastFollowUpAt,
+        deletedAt = deletedAt
     )
 }

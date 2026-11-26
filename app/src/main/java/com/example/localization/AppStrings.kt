@@ -229,6 +229,24 @@ sealed class AppStrings {
     abstract val msgDraftDiscarded: String
     abstract fun msgApplicationDeleted(company: String): String
     abstract val msgApplicationRestored: String
+
+    // Trash
+    abstract val trashTitle: String
+    abstract val trashSubtitle: String
+    abstract fun trashButton(count: Int): String
+    abstract val trashEmpty: String
+    abstract val trashEmptyHint: String
+    abstract val restoreButton: String
+    abstract val deleteForeverButton: String
+    abstract val emptyTrashButton: String
+    abstract val emptyTrashDialogTitle: String
+    abstract fun emptyTrashDialogMessage(count: Int): String
+    abstract val deleteForeverDialogTitle: String
+    abstract fun deleteForeverDialogMessage(company: String): String
+    abstract fun deletedAgo(days: Int): String
+    abstract fun msgDeletedForever(company: String): String
+    abstract fun msgTrashEmptied(count: Int): String
+    abstract val closeTrashDesc: String
     abstract val msgJobNotFound: String
     abstract val errCompanyRequired: String
     abstract val errJobTitleRequired: String
@@ -492,7 +510,7 @@ sealed class AppStrings {
         override val notesSectionTitle = "Notes & Description"
         override val notesPlaceholder = "Paste job description highlights, referral contacts, interview notes..."
         override val deleteDialogTitle = "Delete Application"
-        override val deleteDialogMessage = "Are you sure you want to delete this job application? This action cannot be undone."
+        override val deleteDialogMessage = "This application will be moved to the trash. You can restore it from there."
         override val deleteButton = "Delete"
         override val cancelButton = "Cancel"
         override val unsavedDialogTitle = "Unsaved Application"
@@ -583,8 +601,31 @@ sealed class AppStrings {
         override val aiErrTooLong = "That text is too long for the AI service. Shorten it and try again."
 
         override val msgDraftDiscarded = "Draft application discarded"
-        override fun msgApplicationDeleted(company: String) = "Application for $company deleted"
+        override fun msgApplicationDeleted(company: String) = "Application for $company moved to trash"
         override val msgApplicationRestored = "Application restored"
+
+        override val trashTitle = "Trash"
+        override val trashSubtitle = "Deleted applications stay here until you remove them"
+        override fun trashButton(count: Int) = "Trash ($count)"
+        override val trashEmpty = "Trash is empty"
+        override val trashEmptyHint = "Applications you delete will appear here, so you can restore them."
+        override val restoreButton = "Restore"
+        override val deleteForeverButton = "Delete forever"
+        override val emptyTrashButton = "Empty trash"
+        override val emptyTrashDialogTitle = "Empty trash?"
+        override fun emptyTrashDialogMessage(count: Int) =
+            "Permanently delete all $count applications in the trash? This cannot be undone."
+        override val deleteForeverDialogTitle = "Delete permanently?"
+        override fun deleteForeverDialogMessage(company: String) =
+            "The application for $company will be deleted permanently. This cannot be undone."
+        override fun deletedAgo(days: Int) = when (days) {
+            0 -> "Deleted today"
+            1 -> "Deleted yesterday"
+            else -> "Deleted $days days ago"
+        }
+        override fun msgDeletedForever(company: String) = "Application for $company permanently deleted"
+        override fun msgTrashEmptied(count: Int) = "Trash emptied ($count permanently deleted)"
+        override val closeTrashDesc = "Close trash"
         override val msgJobNotFound = "Job application not found"
         override val errCompanyRequired = "Company name is required"
         override val errJobTitleRequired = "Job title is required"
@@ -841,7 +882,7 @@ sealed class AppStrings {
         override val notesSectionTitle = "নোট ও বিস্তারিত বিবরণ"
         override val notesPlaceholder = "চাকরির প্রধান বিবরণ, ইন্টারভিউ নোট বা প্রয়োজনীয় তথ্য লিখুন..."
         override val deleteDialogTitle = "আবেদন মুছে ফেলুন"
-        override val deleteDialogMessage = "আপনি কি নিশ্চিতভাবে এই চাকরির আবেদনটি মুছে ফেলতে চান? এটি আর ফিরিয়ে আনা যাবে না।"
+        override val deleteDialogMessage = "আবেদনটি ট্র্যাশে সরানো হবে। চাইলে সেখান থেকে ফিরিয়ে আনতে পারবেন।"
         override val deleteButton = "মুছে ফেলুন"
         override val cancelButton = "বাতিল"
         override val unsavedDialogTitle = "অসংরক্ষিত আবেদন"
@@ -930,8 +971,31 @@ sealed class AppStrings {
         override val aiErrTooLong = "লেখাটি এআই সার্ভিসের জন্য অনেক বড়। ছোট করে আবার চেষ্টা করুন।"
 
         override val msgDraftDiscarded = "খসড়া আবেদন বাতিল করা হয়েছে"
-        override fun msgApplicationDeleted(company: String) = "$company এর আবেদন মুছে ফেলা হয়েছে"
+        override fun msgApplicationDeleted(company: String) = "$company এর আবেদন ট্র্যাশে সরানো হয়েছে"
         override val msgApplicationRestored = "আবেদন পুনরুদ্ধার করা হয়েছে"
+
+        override val trashTitle = "ট্র্যাশ"
+        override val trashSubtitle = "মুছে ফেলা আবেদন আপনি স্থায়ীভাবে না মুছা পর্যন্ত এখানে থাকবে"
+        override fun trashButton(count: Int) = "ট্র্যাশ ($count)"
+        override val trashEmpty = "ট্র্যাশ খালি"
+        override val trashEmptyHint = "আপনি যে আবেদন মুছবেন তা এখানে দেখা যাবে, চাইলে ফিরিয়ে আনতে পারবেন।"
+        override val restoreButton = "ফিরিয়ে আনুন"
+        override val deleteForeverButton = "স্থায়ীভাবে মুছুন"
+        override val emptyTrashButton = "ট্র্যাশ খালি করুন"
+        override val emptyTrashDialogTitle = "ট্র্যাশ খালি করবেন?"
+        override fun emptyTrashDialogMessage(count: Int) =
+            "ট্র্যাশের সব $count টি আবেদন স্থায়ীভাবে মুছে ফেলবেন? এটি আর ফিরিয়ে আনা যাবে না।"
+        override val deleteForeverDialogTitle = "স্থায়ীভাবে মুছবেন?"
+        override fun deleteForeverDialogMessage(company: String) =
+            "$company এর আবেদনটি স্থায়ীভাবে মুছে যাবে। এটি আর ফিরিয়ে আনা যাবে না।"
+        override fun deletedAgo(days: Int) = when (days) {
+            0 -> "আজ মুছেছেন"
+            1 -> "গতকাল মুছেছেন"
+            else -> "$days দিন আগে মুছেছেন"
+        }
+        override fun msgDeletedForever(company: String) = "$company এর আবেদন স্থায়ীভাবে মুছে ফেলা হয়েছে"
+        override fun msgTrashEmptied(count: Int) = "ট্র্যাশ খালি করা হয়েছে ($count টি স্থায়ীভাবে মুছে গেছে)"
+        override val closeTrashDesc = "ট্র্যাশ বন্ধ করুন"
         override val msgJobNotFound = "চাকরির আবেদন পাওয়া যায়নি"
         override val errCompanyRequired = "কোম্পানির নাম আবশ্যক"
         override val errJobTitleRequired = "পদবী আবশ্যক"

@@ -413,6 +413,20 @@ fun AddEditJobScreen(
                         )
                     }
                 }
+                val subtitle: @Composable (Modifier) -> Unit = { subtitleModifier ->
+                    Text(
+                        text = strings.aiAssistantDesc,
+                        modifier = subtitleModifier,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
+                            letterSpacing = 0.4.sp
+                        ),
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -449,17 +463,7 @@ fun AddEditJobScreen(
                             softWrap = false,
                             overflow = TextOverflow.Ellipsis
                         )
-                        Text(
-                            text = strings.aiAssistantDesc,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 11.sp,
-                                letterSpacing = 0.4.sp
-                            ),
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        if (!narrowHeader) subtitle(Modifier)
                     }
 
                     if (!narrowHeader) {
@@ -468,13 +472,15 @@ fun AddEditJobScreen(
                     }
                 }
                 if (narrowHeader) {
+                    // Subtitle on the left, actions on the right: one balanced toolbar row.
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        subtitle(Modifier.weight(1f))
+                        Spacer(modifier = Modifier.width(8.dp))
                         actionCluster()
                     }
                 }
@@ -619,10 +625,10 @@ fun AddEditJobScreen(
                     )
                 },
                 isError = state.companyNameError != null,
-                supportingText = {
-                    state.companyNameError?.let {
-                        Text(text = it, color = MaterialTheme.colorScheme.error)
-                    }
+                // Only composed when there is an error: an always-present lambda reserves an empty
+                // line under the field and makes this gap twice as big as the others.
+                supportingText = state.companyNameError?.let { error ->
+                    { Text(text = error, color = MaterialTheme.colorScheme.error) }
                 },
                 singleLine = true,
                 shape = RetroFieldShape,
@@ -646,10 +652,8 @@ fun AddEditJobScreen(
                     )
                 },
                 isError = state.jobTitleError != null,
-                supportingText = {
-                    state.jobTitleError?.let {
-                        Text(text = it, color = MaterialTheme.colorScheme.error)
-                    }
+                supportingText = state.jobTitleError?.let { error ->
+                    { Text(text = error, color = MaterialTheme.colorScheme.error) }
                 },
                 singleLine = true,
                 shape = RetroFieldShape,

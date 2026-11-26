@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [JobApplicationEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class JobDatabase : RoomDatabase() {
@@ -33,9 +33,16 @@ abstract class JobDatabase : RoomDatabase() {
             }
         }
 
+        /** v4 -> v5: trash. Soft-delete timestamp; 0 keeps every existing row live. Additive only. */
+        val MIGRATION_4_5: Migration = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE job_applications ADD COLUMN deletedAt INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         // Every schema change after the first Play release (v3) MUST add a Migration here so
         // updating the app keeps user data. Never add a destructive fallback for v3 or newer.
-        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_3_4)
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_3_4, MIGRATION_4_5)
 
         @Volatile
         private var INSTANCE: JobDatabase? = null

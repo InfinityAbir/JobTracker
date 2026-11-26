@@ -2,19 +2,46 @@ package com.example.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.R
 
 /*
  * Retro type pairing:
  * - Serif display faces for headlines and record titles (vintage print).
- * - Monospace for body, data and labels (letterpress / terminal).
+ * - Monospace for labels, data and metadata (letterpress / terminal).
+ * - Sans for running text and form input.
+ *
+ * All three families are bundled (res/font, SIL OFL) instead of using FontFamily.Serif /
+ * Monospace / SansSerif. Those generic families resolve to whatever the OEM or the user's
+ * system-font setting provides, so the same screen used to look different on every phone.
+ * Bengali glyphs are not in these fonts and still fall back to the system Bengali font.
  */
-val RetroDisplay = FontFamily.Serif
-val RetroMono = FontFamily.Monospace
-val RetroBody = FontFamily.SansSerif
+private val WEIGHTS = listOf(
+    FontWeight.Normal,
+    FontWeight.Medium,
+    FontWeight.SemiBold,
+    FontWeight.Bold,
+    FontWeight.Black
+)
+
+private fun variableFamily(resId: Int): FontFamily = FontFamily(
+    WEIGHTS.map { weight ->
+        Font(
+            resId = resId,
+            weight = weight,
+            variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight))
+        )
+    }
+)
+
+val RetroDisplay: FontFamily = variableFamily(R.font.playfair_display_variable)
+val RetroMono: FontFamily = variableFamily(R.font.jetbrains_mono_variable)
+val RetroBody: FontFamily = variableFamily(R.font.inter_variable)
 
 val Typography = Typography(
     displaySmall = TextStyle(

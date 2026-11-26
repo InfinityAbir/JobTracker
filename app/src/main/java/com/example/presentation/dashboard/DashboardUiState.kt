@@ -10,6 +10,10 @@ data class DashboardUiState(
     val applications: List<JobApplication> = emptyList(),
     val rawApplications: List<JobApplication> = emptyList(),
     val upcomingInterviews: List<JobApplication> = emptyList(),
+    /** Applications in the trash, most recently deleted first. */
+    val trashedApplications: List<JobApplication> = emptyList(),
+    /** True while the last delete can still be undone from the snackbar. */
+    val canUndoDelete: Boolean = false,
     val summary: StatusSummary = StatusSummary(),
     val activeDraft: JobDraft? = null,
     val isDraftFilterSelected: Boolean = false,
@@ -26,6 +30,9 @@ sealed interface DashboardUiEvent {
     data class OnSortOptionSelected(val option: JobSortOption) : DashboardUiEvent
     data class OnDeleteApplication(val application: JobApplication) : DashboardUiEvent
     data class OnRestoreApplication(val application: JobApplication) : DashboardUiEvent
+    data class OnRestoreFromTrash(val application: JobApplication) : DashboardUiEvent
+    data class OnDeleteForever(val application: JobApplication) : DashboardUiEvent
+    data object OnEmptyTrash : DashboardUiEvent
     data object OnDraftFilterToggled : DashboardUiEvent
     data object OnDiscardDraft : DashboardUiEvent
     data object OnRefreshDraft : DashboardUiEvent

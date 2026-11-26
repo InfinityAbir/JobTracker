@@ -6,6 +6,10 @@ import com.example.domain.model.JobSortOption
 import com.example.domain.model.JobStatus
 import com.example.domain.repository.JobRepository
 import com.example.domain.usecase.DeleteJobApplicationUseCase
+import com.example.domain.usecase.DeleteJobPermanentlyUseCase
+import com.example.domain.usecase.EmptyTrashUseCase
+import com.example.domain.usecase.GetTrashedJobsUseCase
+import com.example.domain.usecase.RestoreJobFromTrashUseCase
 import com.example.domain.usecase.GetJobApplicationsUseCase
 import com.example.domain.usecase.GetStatusSummaryUseCase
 import com.example.domain.usecase.SaveJobApplicationUseCase
@@ -16,6 +20,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -23,6 +28,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -70,7 +76,11 @@ class DashboardViewModelTest {
             getJobApplicationsUseCase = getAppsUseCase,
             getStatusSummaryUseCase = getSummaryUseCase,
             deleteJobApplicationUseCase = deleteUseCase,
-            saveJobApplicationUseCase = saveUseCase
+            saveJobApplicationUseCase = saveUseCase,
+            getTrashedJobsUseCase = GetTrashedJobsUseCase(fakeRepository),
+            restoreJobFromTrashUseCase = RestoreJobFromTrashUseCase(fakeRepository),
+            deleteJobPermanentlyUseCase = DeleteJobPermanentlyUseCase(fakeRepository),
+            emptyTrashUseCase = EmptyTrashUseCase(fakeRepository)
         )
     }
 
@@ -180,7 +190,9 @@ class DashboardViewModelTest {
 
             val stateAfterDelete = expectMostRecentItem()
             assertEquals(2, stateAfterDelete.applications.size)
-            assertEquals("Application for ${jobToDelete.companyName} deleted", stateAfterDelete.userMessage)
+            assertEquals("Application for ${jobToDelete.companyName} moved to trash", stateAfterDelete.userMessage)
+            assertEquals(1, stateAfterDelete.trashedApplications.size)
+            assertTrue(stateAfterDelete.canUndoDelete)
 
             viewModel.onEvent(DashboardUiEvent.OnRestoreApplication(jobToDelete))
             testScheduler.advanceUntilIdle()
@@ -188,6 +200,81 @@ class DashboardViewModelTest {
             val stateAfterRestore = expectMostRecentItem()
             assertEquals(3, stateAfterRestore.applications.size)
             assertEquals("Application restored", stateAfterRestore.userMessage)
+            assertTrue(stateAfterRestore.trashedApplications.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun deletedApplication_goesToTrash_andCanBeRestoredFromIt() = runTest(testDispatcher) {
+        viewModel.uiState.test {
+            awaitItem()
+            testScheduler.advanceUntilIdle()
+            val job = expectMostRecentItem().applications[0]
+
+            viewModel.onEvent(DashboardUiEvent.OnDeleteApplication(job))
+            testScheduler.advanceUntilIdle()
+            val inTrash = expectMostRecentItem()
+            assertEquals(2, inTrash.applications.size)
+            assertEquals(listOf(job.id), inTrash.trashedApplications.map { it.id })
+            // Trashed jobs stay out of the pipeline counts
+            assertEquals(2, inTrash.summary.total)
+
+            viewModel.onEvent(DashboardUiEvent.OnRestoreFromTrash(inTrash.trashedApplications.first()))
+            testScheduler.advanceUntilIdle()
+            val restored = expectMostRecentItem()
+            assertEquals(3, restored.applications.size)
+            assertTrue(restored.trashedApplications.isEmpty())
+            // Same record comes back, not a copy with a new id
+            assertTrue(restored.applications.any { it.id == job.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun deleteForever_removesOnlyThatApplicationFromTrash() = runTest(testDispatcher) {
+        viewModel.uiState.test {
+            awaitItem()
+            testScheduler.advanceUntilIdle()
+            val jobs = expectMostRecentItem().applications
+
+            viewModel.onEvent(DashboardUiEvent.OnDeleteApplication(jobs[0]))
+            viewModel.onEvent(DashboardUiEvent.OnDeleteApplication(jobs[1]))
+            testScheduler.advanceUntilIdle()
+            assertEquals(2, expectMostRecentItem().trashedApplications.size)
+
+            viewModel.onEvent(DashboardUiEvent.OnDeleteForever(jobs[0]))
+            testScheduler.advanceUntilIdle()
+            val state = expectMostRecentItem()
+            assertEquals(listOf(jobs[1].id), state.trashedApplications.map { it.id })
+            assertEquals(1, state.applications.size)
+            assertEquals(false, state.canUndoDelete)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun emptyTrash_permanentlyDeletesEverythingInTrash() = runTest(testDispatcher) {
+        viewModel.uiState.test {
+            awaitItem()
+            testScheduler.advanceUntilIdle()
+            val jobs = expectMostRecentItem().applications
+
+            viewModel.onEvent(DashboardUiEvent.OnDeleteApplication(jobs[0]))
+            viewModel.onEvent(DashboardUiEvent.OnDeleteApplication(jobs[1]))
+            testScheduler.advanceUntilIdle()
+            assertEquals(2, expectMostRecentItem().trashedApplications.size)
+
+            viewModel.onEvent(DashboardUiEvent.OnEmptyTrash)
+            testScheduler.advanceUntilIdle()
+            val state = expectMostRecentItem()
+            assertTrue(state.trashedApplications.isEmpty())
+            assertEquals(1, state.applications.size)
+            assertEquals("Trash emptied (2 permanently deleted)", state.userMessage)
+            // Nothing left to bring back, so the snackbar must not offer Undo any more
+            assertEquals(false, state.canUndoDelete)
+            // Gone for good: not in the repository at all
+            assertEquals(1, fakeRepository.allIncludingTrashed().size)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -196,9 +283,12 @@ class DashboardViewModelTest {
 class FakeJobRepository(initialJobs: List<JobApplication> = emptyList()) : JobRepository {
     private val jobsFlow = MutableStateFlow(initialJobs)
 
-    override fun getApplications(): Flow<List<JobApplication>> = jobsFlow
+    override fun getApplications(): Flow<List<JobApplication>> =
+        jobsFlow.map { list -> list.filter { it.deletedAt == 0L } }
 
-    override suspend fun getAllDirect(): List<JobApplication> = jobsFlow.value
+    override suspend fun getAllDirect(): List<JobApplication> = jobsFlow.value.filter { it.deletedAt == 0L }
+
+    fun allIncludingTrashed(): List<JobApplication> = jobsFlow.value
 
     override fun getApplicationById(id: Long): Flow<JobApplication?> =
         flowOf(jobsFlow.value.firstOrNull { it.id == id })
@@ -227,5 +317,25 @@ class FakeJobRepository(initialJobs: List<JobApplication> = emptyList()) : JobRe
 
     override suspend fun deleteApplicationById(id: Long) {
         jobsFlow.value = jobsFlow.value.filter { it.id != id }
+    }
+
+    override fun getTrashedApplications(): Flow<List<JobApplication>> =
+        jobsFlow.map { list -> list.filter { it.deletedAt > 0L }.sortedByDescending { it.deletedAt } }
+
+    // Strictly increasing so "newest deletion first" is deterministic inside one millisecond.
+    private var clock = 1_000L
+
+    override suspend fun moveToTrash(id: Long) {
+        jobsFlow.value = jobsFlow.value.map { if (it.id == id) it.copy(deletedAt = ++clock) else it }
+    }
+
+    override suspend fun restoreFromTrash(id: Long) {
+        jobsFlow.value = jobsFlow.value.map { if (it.id == id) it.copy(deletedAt = 0L) else it }
+    }
+
+    override suspend fun emptyTrash(): Int {
+        val removed = jobsFlow.value.count { it.deletedAt > 0L }
+        jobsFlow.value = jobsFlow.value.filter { it.deletedAt == 0L }
+        return removed
     }
 }

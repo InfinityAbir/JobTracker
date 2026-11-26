@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface JobApplicationDao {
 
-    @Query("SELECT * FROM job_applications ORDER BY id DESC")
+    @Query("SELECT * FROM job_applications WHERE deletedAt = 0 ORDER BY id DESC")
     fun getAllApplications(): Flow<List<JobApplicationEntity>>
 
-    @Query("SELECT * FROM job_applications")
+    @Query("SELECT * FROM job_applications WHERE deletedAt = 0")
     suspend fun getAllDirect(): List<JobApplicationEntity>
 
     @Query("SELECT * FROM job_applications WHERE id = :id")
@@ -38,9 +38,23 @@ interface JobApplicationDao {
     @Query("DELETE FROM job_applications WHERE id = :id")
     suspend fun deleteApplicationById(id: Long)
 
-    @Query("SELECT * FROM job_applications WHERE status = :status ORDER BY id DESC")
+    // --- Trash (soft delete) ---
+
+    @Query("SELECT * FROM job_applications WHERE deletedAt > 0 ORDER BY deletedAt DESC")
+    fun getTrashed(): Flow<List<JobApplicationEntity>>
+
+    @Query("UPDATE job_applications SET deletedAt = :deletedAt WHERE id = :id")
+    suspend fun moveToTrash(id: Long, deletedAt: Long)
+
+    @Query("UPDATE job_applications SET deletedAt = 0 WHERE id = :id")
+    suspend fun restoreFromTrash(id: Long)
+
+    @Query("DELETE FROM job_applications WHERE deletedAt > 0")
+    suspend fun emptyTrash(): Int
+
+    @Query("SELECT * FROM job_applications WHERE status = :status AND deletedAt = 0 ORDER BY id DESC")
     fun getApplicationsByStatus(status: String): Flow<List<JobApplicationEntity>>
 
-    @Query("SELECT COUNT(*) FROM job_applications")
+    @Query("SELECT COUNT(*) FROM job_applications WHERE deletedAt = 0")
     fun getApplicationCount(): Flow<Int>
 }

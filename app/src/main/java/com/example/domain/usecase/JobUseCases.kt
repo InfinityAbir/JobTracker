@@ -74,14 +74,37 @@ class SaveJobApplicationUseCase(private val repository: JobRepository) {
     }
 }
 
+/** "Delete" in the UI: moves the application to the trash, where it can still be restored. */
 class DeleteJobApplicationUseCase(private val repository: JobRepository) {
     suspend operator fun invoke(application: JobApplication) {
-        repository.deleteApplication(application)
+        repository.moveToTrash(application.id)
     }
 
     suspend operator fun invoke(id: Long) {
+        repository.moveToTrash(id)
+    }
+}
+
+class GetTrashedJobsUseCase(private val repository: JobRepository) {
+    operator fun invoke(): Flow<List<JobApplication>> = repository.getTrashedApplications()
+}
+
+class RestoreJobFromTrashUseCase(private val repository: JobRepository) {
+    suspend operator fun invoke(id: Long) {
+        repository.restoreFromTrash(id)
+    }
+}
+
+/** Irreversible: removes the row from the database. Only the trash screen may call this. */
+class DeleteJobPermanentlyUseCase(private val repository: JobRepository) {
+    suspend operator fun invoke(id: Long) {
         repository.deleteApplicationById(id)
     }
+}
+
+class EmptyTrashUseCase(private val repository: JobRepository) {
+    /** Returns the number of applications permanently deleted. */
+    suspend operator fun invoke(): Int = repository.emptyTrash()
 }
 
 class GetStatusSummaryUseCase(private val repository: JobRepository) {

@@ -9,6 +9,10 @@ import com.example.data.repository.JobRepositoryImpl
 import com.example.domain.repository.JobRepository
 import com.example.domain.usecase.AnalyzeResumeMatchUseCase
 import com.example.domain.usecase.DeleteJobApplicationUseCase
+import com.example.domain.usecase.DeleteJobPermanentlyUseCase
+import com.example.domain.usecase.EmptyTrashUseCase
+import com.example.domain.usecase.GetTrashedJobsUseCase
+import com.example.domain.usecase.RestoreJobFromTrashUseCase
 import com.example.domain.usecase.GenerateCoverLetterUseCase
 import com.example.domain.usecase.GenerateFollowUpEmailUseCase
 import com.example.domain.usecase.GetJobApplicationsUseCase
@@ -28,6 +32,10 @@ interface AppContainer {
     val saveJobApplicationUseCase: SaveJobApplicationUseCase
     val deleteJobApplicationUseCase: DeleteJobApplicationUseCase
     val getStatusSummaryUseCase: GetStatusSummaryUseCase
+    val getTrashedJobsUseCase: GetTrashedJobsUseCase
+    val restoreJobFromTrashUseCase: RestoreJobFromTrashUseCase
+    val deleteJobPermanentlyUseCase: DeleteJobPermanentlyUseCase
+    val emptyTrashUseCase: EmptyTrashUseCase
     val parseJobDescriptionUseCase: ParseJobDescriptionUseCase
     val generateCoverLetterUseCase: GenerateCoverLetterUseCase
     val generateFollowUpEmailUseCase: GenerateFollowUpEmailUseCase
@@ -77,6 +85,18 @@ class DefaultAppContainer(override val context: Context) : AppContainer {
     override val getStatusSummaryUseCase: GetStatusSummaryUseCase by lazy {
         GetStatusSummaryUseCase(jobRepository)
     }
+
+    override val getTrashedJobsUseCase: GetTrashedJobsUseCase by lazy { GetTrashedJobsUseCase(jobRepository) }
+
+    override val restoreJobFromTrashUseCase: RestoreJobFromTrashUseCase by lazy {
+        RestoreJobFromTrashUseCase(jobRepository)
+    }
+
+    override val deleteJobPermanentlyUseCase: DeleteJobPermanentlyUseCase by lazy {
+        DeleteJobPermanentlyUseCase(jobRepository)
+    }
+
+    override val emptyTrashUseCase: EmptyTrashUseCase by lazy { EmptyTrashUseCase(jobRepository) }
 
     override val parseJobDescriptionUseCase: ParseJobDescriptionUseCase by lazy {
         ParseJobDescriptionUseCase(geminiService)

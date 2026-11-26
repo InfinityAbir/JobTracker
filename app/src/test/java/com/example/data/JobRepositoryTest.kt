@@ -31,9 +31,10 @@ class FakeJobApplicationDao : JobApplicationDao {
     var lastDeletedItem: JobApplicationEntity? = null
     var lastDeletedId: Long? = null
 
-    override fun getAllApplications(): Flow<List<JobApplicationEntity>> = items
+    override fun getAllApplications(): Flow<List<JobApplicationEntity>> =
+        items.map { list -> list.filter { it.deletedAt == 0L } }
 
-    override suspend fun getAllDirect(): List<JobApplicationEntity> = items.value
+    override suspend fun getAllDirect(): List<JobApplicationEntity> = items.value.filter { it.deletedAt == 0L }
 
     override fun getApplicationById(id: Long): Flow<JobApplicationEntity?> =
         items.map { list -> list.firstOrNull { it.id == id } }
@@ -72,10 +73,27 @@ class FakeJobApplicationDao : JobApplicationDao {
     }
 
     override fun getApplicationsByStatus(status: String): Flow<List<JobApplicationEntity>> =
-        items.map { list -> list.filter { it.status == status } }
+        items.map { list -> list.filter { it.status == status && it.deletedAt == 0L } }
 
     override fun getApplicationCount(): Flow<Int> =
-        items.map { it.size }
+        items.map { list -> list.count { it.deletedAt == 0L } }
+
+    override fun getTrashed(): Flow<List<JobApplicationEntity>> =
+        items.map { list -> list.filter { it.deletedAt > 0L }.sortedByDescending { it.deletedAt } }
+
+    override suspend fun moveToTrash(id: Long, deletedAt: Long) {
+        items.value = items.value.map { if (it.id == id) it.copy(deletedAt = deletedAt) else it }
+    }
+
+    override suspend fun restoreFromTrash(id: Long) {
+        items.value = items.value.map { if (it.id == id) it.copy(deletedAt = 0L) else it }
+    }
+
+    override suspend fun emptyTrash(): Int {
+        val removed = items.value.count { it.deletedAt > 0L }
+        items.value = items.value.filter { it.deletedAt == 0L }
+        return removed
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
