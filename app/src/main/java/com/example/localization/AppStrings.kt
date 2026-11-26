@@ -614,7 +614,11 @@ sealed class AppStrings {
         override val emptyTrashButton = "Empty trash"
         override val emptyTrashDialogTitle = "Empty trash?"
         override fun emptyTrashDialogMessage(count: Int) =
-            "Permanently delete all $count applications in the trash? This cannot be undone."
+            if (count == 1) {
+                "Permanently delete the application in the trash? This cannot be undone."
+            } else {
+                "Permanently delete all $count applications in the trash? This cannot be undone."
+            }
         override val deleteForeverDialogTitle = "Delete permanently?"
         override fun deleteForeverDialogMessage(company: String) =
             "The application for $company will be deleted permanently. This cannot be undone."
